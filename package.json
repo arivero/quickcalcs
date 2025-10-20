@@ -1,0 +1,11 @@
+{
+  "name": "quickcalcs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.js"
+  },
+  "devDependencies": {
+    "esbuild": "^0.21.5"
+  }
+}
