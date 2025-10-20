@@ -43,6 +43,8 @@ The compiled calculators land in `dist/`:
 * `dist/keypad-single.html` – Classic keypad with a toggle to route digits to the left or right operand.
 * `dist/columnar-dual.html` – Vertical column calculator with stacked digits per operand.
 
+and must be moved to docs to release it public
+
 Each file is self-contained and ready for offline distribution.
 
 ## Refreshing screenshots
