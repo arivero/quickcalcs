@@ -1,9 +1,12 @@
+import { evaluateBinaryOperation } from './precision.js';
+
 export function mountDualOperandCalculator(options = {}) {
   const {
     operations = ['+', '−', '×', ':'],
     selectors = {
       fieldValueA: '[data-field-value="A"]',
       fieldValueB: '[data-field-value="B"]',
+      operationValue: '[data-operation-value]',
       fieldA: '[data-field="A"]',
       fieldB: '[data-field="B"]',
       resultValue: '[data-result-value]',
@@ -19,6 +22,13 @@ export function mountDualOperandCalculator(options = {}) {
     A: document.querySelector(selectors.fieldValueA),
     B: document.querySelector(selectors.fieldValueB),
   };
+  const expressionPieces = {
+    A: fieldValues.A?.closest('[data-expression="A"]') ?? null,
+    B: fieldValues.B?.closest('[data-expression="B"]') ?? null,
+  };
+  const operationValue = selectors.operationValue
+    ? document.querySelector(selectors.operationValue)
+    : null;
   const fieldCards = {
     A: document.querySelector(selectors.fieldA),
     B: document.querySelector(selectors.fieldB),
@@ -37,6 +47,7 @@ export function mountDualOperandCalculator(options = {}) {
   let bStr = '';
   let op = operations[2] ?? '×';
   let lastActive = 'A';
+  const pendingClear = { A: false, B: false };
 
   const determinePadTarget =
     typeof resolvePadTarget === 'function'
@@ -96,37 +107,32 @@ export function mountDualOperandCalculator(options = {}) {
     setOperand(which, s);
   }
 
-  function computeResult() {
-    const A = Number(aStr);
-    const B = Number(bStr);
-    if (!Number.isFinite(A) || !Number.isFinite(B)) return '—';
-    switch (op) {
-      case '+':
-        return String(A + B);
-      case '−':
-        return String(A - B);
-      case '×':
-        return String(A * B);
-      case ':':
-        return B === 0 ? '∞' : String(A / B);
-      default:
-        return '—';
-    }
-  }
-
   function refresh() {
+    const { text: resultText } = evaluateBinaryOperation(op, Number(aStr), Number(bStr));
     fieldValues.A.textContent = displayValue(aStr);
     fieldValues.B.textContent = displayValue(bStr);
-    resultValue.textContent = computeResult();
+    resultValue.textContent = resultText;
+    if (operationValue) {
+      operationValue.textContent = op;
+    }
     opButtons.forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.op === op);
     });
     fieldCards.A?.classList.toggle('is-active', lastActive === 'A');
     fieldCards.B?.classList.toggle('is-active', lastActive === 'B');
+    expressionPieces.A?.classList.toggle('is-active', lastActive === 'A');
+    expressionPieces.B?.classList.toggle('is-active', lastActive === 'B');
   }
 
   function handlePadButton(target, btn) {
     if (!target) return;
+    if (target !== lastActive) {
+      pendingClear[target] = true;
+    }
+    if (pendingClear[target]) {
+      setOperand(target, '');
+      pendingClear[target] = false;
+    }
     if (btn.dataset.digit !== undefined) {
       appendDigit(target, btn.dataset.digit);
     } else {
@@ -174,6 +180,8 @@ export function mountDualOperandCalculator(options = {}) {
     aStr = '';
     bStr = '';
     lastActive = 'A';
+    pendingClear.A = false;
+    pendingClear.B = false;
     refresh();
   });
 
@@ -183,6 +191,8 @@ export function mountDualOperandCalculator(options = {}) {
     aStr = bStr;
     bStr = tmp;
     lastActive = lastActive === 'A' ? 'B' : 'A';
+    pendingClear.A = false;
+    pendingClear.B = false;
     refresh();
   });
 
@@ -194,6 +204,9 @@ export function mountDualOperandCalculator(options = {}) {
     },
     setActiveOperand(which) {
       if (which !== 'A' && which !== 'B') return;
+      if (which !== lastActive) {
+        pendingClear[which] = true;
+      }
       lastActive = which;
       refresh();
     },

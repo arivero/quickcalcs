@@ -1,4 +1,6 @@
-  ;(() => {
+import { evaluateBinaryOperation } from '../shared/precision.js';
+
+;(() => {
     const cv = document.getElementById('cv');
     const ctx = cv.getContext('2d');
 
@@ -253,16 +255,8 @@
     }
 
     function computeResult() {
-      const A = Number(aStr);
-      const B = Number(bStr);
-      if (!Number.isFinite(A) || !Number.isFinite(B)) return '—';
-      switch (OPS[opIndex]) {
-        case '+': return String(A + B);
-        case '−': return String(A - B);
-        case '×': return String(A * B);
-        case ':' : return B === 0 ? '∞' : String(A / B);
-      }
-      return '—';
+      const { text } = evaluateBinaryOperation(OPS[opIndex], Number(aStr), Number(bStr));
+      return text;
     }
 
     function normalizeZeros(s) {

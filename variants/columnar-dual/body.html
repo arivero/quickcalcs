@@ -1,9 +1,8 @@
   <header>QuickCalcs — Columnar Dual</header>
   <main>
-    <section class="columns">
+    <section class="calculator-grid">
       <article class="operand-column" data-field="A">
         <h2>Operand A</h2>
-        <div class="value" data-field-value="A">0</div>
         <div class="digit-stack" data-pad="A">
           {{> variants/shared/fragments/columnar-digit-stack.html }}
         </div>
@@ -11,9 +10,39 @@
           {{> variants/shared/fragments/columnar-tools.html }}
         </div>
       </article>
+
+      <section class="summary-column">
+        <div class="expression-card">
+          <div class="expression-stack">
+            <div class="expression-piece operand" data-expression="A">
+              <span class="label">Operand A</span>
+              <span class="value" data-field-value="A">0</span>
+            </div>
+            <div class="expression-piece operator" data-expression="op">
+              <span class="label">Operation</span>
+              <span class="value" data-operation-value>×</span>
+            </div>
+            <div class="expression-piece operand" data-expression="B">
+              <span class="label">Operand B</span>
+              <span class="value" data-field-value="B">0</span>
+            </div>
+          </div>
+          <div class="result-card">
+            {{> variants/shared/fragments/dual-result-inner.html }}
+          </div>
+        </div>
+
+        <div class="operations">
+          {{> variants/shared/fragments/dual-operations-buttons.html }}
+        </div>
+
+        <div class="actions">
+          {{> variants/shared/fragments/dual-actions-buttons.html }}
+        </div>
+      </section>
+
       <article class="operand-column" data-field="B">
         <h2>Operand B</h2>
-        <div class="value" data-field-value="B">0</div>
         <div class="digit-stack" data-pad="B">
           {{> variants/shared/fragments/columnar-digit-stack.html }}
         </div>
@@ -21,18 +50,6 @@
           {{> variants/shared/fragments/columnar-tools.html }}
         </div>
       </article>
-    </section>
-
-    <section class="operations-panel">
-      <div class="operations">
-        {{> variants/shared/fragments/dual-operations-buttons.html }}
-      </div>
-      <div class="result-card">
-        {{> variants/shared/fragments/dual-result-inner.html }}
-      </div>
-      <div class="actions">
-        {{> variants/shared/fragments/dual-actions-buttons.html }}
-      </div>
     </section>
 
     <p class="hint">Use the left column to enter digits for operand A and the right column for operand B. Operations apply to the current numbers instantly.</p>

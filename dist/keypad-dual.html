@@ -293,14 +293,76 @@
   <p class="hint">Each keypad feeds its own operand. Choose an operation in the center, then type on either column to compose the numbers. Results update instantly. Works offline, no equals needed.</p>
 
   <script type="module">
-  // src/variants/shared/mountDualOperandCalculator.js
+  // src/variants/shared/precision.js
+var buffer = new ArrayBuffer(8);
+var view = new DataView(buffer);
+var LOW_MASK = 4294967280;
+function normalizeDecimalString(str) {
+  if (!str.includes(".")) return str;
+  let next = str.replace(/(\.\d*?)0+$/, "$1");
+  if (next.endsWith(".")) next = next.slice(0, -1);
+  return next;
+}
+function truncateTo48Bits(value) {
+  if (!Number.isFinite(value)) return value;
+  view.setFloat64(0, value);
+  const hi = view.getUint32(0);
+  const lo = view.getUint32(4) & LOW_MASK;
+  view.setUint32(0, hi);
+  view.setUint32(4, lo);
+  return view.getFloat64(0);
+}
+function formatTruncated(value) {
+  if (!Number.isFinite(value)) {
+    if (Number.isNaN(value)) return "\u2014";
+    return value >= 0 ? "\u221E" : "\u2212\u221E";
+  }
+  const truncated = truncateTo48Bits(value);
+  const normalized = Number.parseFloat(truncated.toPrecision(14));
+  const text = normalized.toString();
+  return normalizeDecimalString(text);
+}
+function evaluateBinaryOperation(op, A, B) {
+  if (!Number.isFinite(A) || !Number.isFinite(B)) {
+    return { value: NaN, text: "\u2014" };
+  }
+  let result;
+  switch (op) {
+    case "+":
+      result = A + B;
+      break;
+    case "\u2212":
+      result = A - B;
+      break;
+    case "\xD7":
+      result = A * B;
+      break;
+    case ":":
+      if (B === 0) {
+        return { value: Infinity, text: "\u221E" };
+      }
+      result = A / B;
+      break;
+    default:
+      return { value: NaN, text: "\u2014" };
+  }
+  if (!Number.isFinite(result)) {
+    if (Number.isNaN(result)) return { value: NaN, text: "\u2014" };
+    return { value: result, text: result >= 0 ? "\u221E" : "\u2212\u221E" };
+  }
+  const truncated = truncateTo48Bits(result);
+  return { value: truncated, text: formatTruncated(truncated) };
+}
+
+// src/variants/shared/mountDualOperandCalculator.js
 function mountDualOperandCalculator(options = {}) {
-  var _a;
+  var _a, _b, _c, _d, _e;
   const {
     operations = ["+", "\u2212", "\xD7", ":"],
     selectors = {
       fieldValueA: '[data-field-value="A"]',
       fieldValueB: '[data-field-value="B"]',
+      operationValue: "[data-operation-value]",
       fieldA: '[data-field="A"]',
       fieldB: '[data-field="B"]',
       resultValue: "[data-result-value]",
@@ -315,6 +377,11 @@ function mountDualOperandCalculator(options = {}) {
     A: document.querySelector(selectors.fieldValueA),
     B: document.querySelector(selectors.fieldValueB)
   };
+  const expressionPieces = {
+    A: (_b = (_a = fieldValues.A) == null ? void 0 : _a.closest('[data-expression="A"]')) != null ? _b : null,
+    B: (_d = (_c = fieldValues.B) == null ? void 0 : _c.closest('[data-expression="B"]')) != null ? _d : null
+  };
+  const operationValue = selectors.operationValue ? document.querySelector(selectors.operationValue) : null;
   const fieldCards = {
     A: document.querySelector(selectors.fieldA),
     B: document.querySelector(selectors.fieldB)
@@ -329,8 +396,9 @@ function mountDualOperandCalculator(options = {}) {
   }
   let aStr = "";
   let bStr = "";
-  let op = (_a = operations[2]) != null ? _a : "\xD7";
+  let op = (_e = operations[2]) != null ? _e : "\xD7";
   let lastActive = "A";
+  const pendingClear = { A: false, B: false };
   const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive }) : ({ pad }) => pad.getAttribute("data-pad");
   function displayValue(s) {
     if (s === "") return "0";
@@ -377,36 +445,32 @@ function mountDualOperandCalculator(options = {}) {
     s = s.slice(0, -1);
     setOperand(which, s);
   }
-  function computeResult() {
-    const A = Number(aStr);
-    const B = Number(bStr);
-    if (!Number.isFinite(A) || !Number.isFinite(B)) return "\u2014";
-    switch (op) {
-      case "+":
-        return String(A + B);
-      case "\u2212":
-        return String(A - B);
-      case "\xD7":
-        return String(A * B);
-      case ":":
-        return B === 0 ? "\u221E" : String(A / B);
-      default:
-        return "\u2014";
-    }
-  }
   function refresh() {
-    var _a2, _b;
+    var _a2, _b2, _c2, _d2;
+    const { text: resultText } = evaluateBinaryOperation(op, Number(aStr), Number(bStr));
     fieldValues.A.textContent = displayValue(aStr);
     fieldValues.B.textContent = displayValue(bStr);
-    resultValue.textContent = computeResult();
+    resultValue.textContent = resultText;
+    if (operationValue) {
+      operationValue.textContent = op;
+    }
     opButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.op === op);
     });
     (_a2 = fieldCards.A) == null ? void 0 : _a2.classList.toggle("is-active", lastActive === "A");
-    (_b = fieldCards.B) == null ? void 0 : _b.classList.toggle("is-active", lastActive === "B");
+    (_b2 = fieldCards.B) == null ? void 0 : _b2.classList.toggle("is-active", lastActive === "B");
+    (_c2 = expressionPieces.A) == null ? void 0 : _c2.classList.toggle("is-active", lastActive === "A");
+    (_d2 = expressionPieces.B) == null ? void 0 : _d2.classList.toggle("is-active", lastActive === "B");
   }
   function handlePadButton(target, btn) {
     if (!target) return;
+    if (target !== lastActive) {
+      pendingClear[target] = true;
+    }
+    if (pendingClear[target]) {
+      setOperand(target, "");
+      pendingClear[target] = false;
+    }
     if (btn.dataset.digit !== void 0) {
       appendDigit(target, btn.dataset.digit);
     } else {
@@ -451,6 +515,8 @@ function mountDualOperandCalculator(options = {}) {
     aStr = "";
     bStr = "";
     lastActive = "A";
+    pendingClear.A = false;
+    pendingClear.B = false;
     refresh();
   });
   swapBtn == null ? void 0 : swapBtn.addEventListener("click", (ev) => {
@@ -459,6 +525,8 @@ function mountDualOperandCalculator(options = {}) {
     aStr = bStr;
     bStr = tmp;
     lastActive = lastActive === "A" ? "B" : "A";
+    pendingClear.A = false;
+    pendingClear.B = false;
     refresh();
   });
   refresh();
@@ -468,6 +536,9 @@ function mountDualOperandCalculator(options = {}) {
     },
     setActiveOperand(which) {
       if (which !== "A" && which !== "B") return;
+      if (which !== lastActive) {
+        pendingClear[which] = true;
+      }
       lastActive = which;
       refresh();
     }

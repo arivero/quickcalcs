@@ -64,7 +64,68 @@
   <div class="hint">Glide on the round dial: <strong>12 = decimal point</strong>, <strong>11 = ± (toggle sign)</strong>. Swipe to type; lift (or chord two fingers) to switch A↔B. Tap center to reset. Wheel picks + × − : (× by default). No equals.</div>
 
   <script type="module">
-  // src/variants/circular/index.js
+  // src/variants/shared/precision.js
+var buffer = new ArrayBuffer(8);
+var view = new DataView(buffer);
+var LOW_MASK = 4294967280;
+function normalizeDecimalString(str) {
+  if (!str.includes(".")) return str;
+  let next = str.replace(/(\.\d*?)0+$/, "$1");
+  if (next.endsWith(".")) next = next.slice(0, -1);
+  return next;
+}
+function truncateTo48Bits(value) {
+  if (!Number.isFinite(value)) return value;
+  view.setFloat64(0, value);
+  const hi = view.getUint32(0);
+  const lo = view.getUint32(4) & LOW_MASK;
+  view.setUint32(0, hi);
+  view.setUint32(4, lo);
+  return view.getFloat64(0);
+}
+function formatTruncated(value) {
+  if (!Number.isFinite(value)) {
+    if (Number.isNaN(value)) return "\u2014";
+    return value >= 0 ? "\u221E" : "\u2212\u221E";
+  }
+  const truncated = truncateTo48Bits(value);
+  const normalized = Number.parseFloat(truncated.toPrecision(14));
+  const text = normalized.toString();
+  return normalizeDecimalString(text);
+}
+function evaluateBinaryOperation(op, A, B) {
+  if (!Number.isFinite(A) || !Number.isFinite(B)) {
+    return { value: NaN, text: "\u2014" };
+  }
+  let result;
+  switch (op) {
+    case "+":
+      result = A + B;
+      break;
+    case "\u2212":
+      result = A - B;
+      break;
+    case "\xD7":
+      result = A * B;
+      break;
+    case ":":
+      if (B === 0) {
+        return { value: Infinity, text: "\u221E" };
+      }
+      result = A / B;
+      break;
+    default:
+      return { value: NaN, text: "\u2014" };
+  }
+  if (!Number.isFinite(result)) {
+    if (Number.isNaN(result)) return { value: NaN, text: "\u2014" };
+    return { value: result, text: result >= 0 ? "\u221E" : "\u2212\u221E" };
+  }
+  const truncated = truncateTo48Bits(result);
+  return { value: truncated, text: formatTruncated(truncated) };
+}
+
+// src/variants/circular/index.js
 (() => {
   const cv = document.getElementById("cv");
   const ctx = cv.getContext("2d");
@@ -286,20 +347,8 @@
     drawButton(L.btnSwap, "Swap A\u2194B", pointerMode === "btnSwap" && pointerActive);
   }
   function computeResult() {
-    const A = Number(aStr);
-    const B = Number(bStr);
-    if (!Number.isFinite(A) || !Number.isFinite(B)) return "\u2014";
-    switch (OPS[opIndex]) {
-      case "+":
-        return String(A + B);
-      case "\u2212":
-        return String(A - B);
-      case "\xD7":
-        return String(A * B);
-      case ":":
-        return B === 0 ? "\u221E" : String(A / B);
-    }
-    return "\u2014";
+    const { text } = evaluateBinaryOperation(OPS[opIndex], Number(aStr), Number(bStr));
+    return text;
   }
   function normalizeZeros(s) {
     const neg = s.startsWith("-");
