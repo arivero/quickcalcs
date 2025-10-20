@@ -1,0 +1,40 @@
+  <header>QuickCalcs — Dual Keypads</header>
+  <main>
+    <section class="fields">
+      <article class="operand-card" data-field="A">
+        <h2>Operand A</h2>
+        <div class="value" data-field-value="A">0</div>
+      </article>
+      <div class="operations">
+        {{> variants/shared/fragments/dual-operations-buttons.html }}
+      </div>
+      <article class="operand-card" data-field="B">
+        <h2>Operand B</h2>
+        <div class="value" data-field-value="B">0</div>
+      </article>
+    </section>
+
+    <section class="result-card">
+      {{> variants/shared/fragments/dual-result-inner.html }}
+    </section>
+
+    <section class="pads">
+      <div class="pad" data-pad="A">
+        <h3>Type for A</h3>
+        <div class="pad-grid">
+          {{> variants/shared/fragments/keypad-grid.html }}
+        </div>
+      </div>
+      <div class="pad" data-pad="B">
+        <h3>Type for B</h3>
+        <div class="pad-grid">
+          {{> variants/shared/fragments/keypad-grid.html }}
+        </div>
+      </div>
+    </section>
+
+    <section class="actions">
+      {{> variants/shared/fragments/dual-actions-buttons.html }}
+    </section>
+  </main>
+  <p class="hint">Each keypad feeds its own operand. Choose an operation in the center, then type on either column to compose the numbers. Results update instantly. Works offline, no equals needed.</p>

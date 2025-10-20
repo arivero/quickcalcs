@@ -1,12 +1,5 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Classic Keypad Calculator</title>
   <style>
     :root {
-      color-scheme: dark;
       --bg: #0a101f;
       --surface: rgba(13, 21, 38, 0.92);
       --card: rgba(17, 27, 46, 0.96);
@@ -16,35 +9,28 @@
       --accent-soft: rgba(126, 176, 255, 0.18);
       --border: rgba(255, 255, 255, 0.12);
     }
-    * { box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    body {
       background: radial-gradient(1100px 800px at 50% -10%, #182238, var(--bg));
       color: var(--ink);
-    }
-    body {
+      padding: clamp(14px, 5vw, 36px);
+      gap: clamp(14px, 3vw, 24px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: clamp(14px, 5vw, 36px);
-      gap: clamp(14px, 3vw, 24px);
     }
     header {
       text-align: center;
       font-size: clamp(22px, 5vw, 32px);
-      font-weight: 700;
       letter-spacing: 0.3px;
     }
     main {
       width: min(540px, 100%);
-      display: grid;
       gap: clamp(14px, 3vw, 28px);
       background: var(--surface);
       border-radius: 26px;
       padding: clamp(18px, 4vw, 32px);
       box-shadow: 0 32px 70px rgba(4, 9, 25, 0.6);
+      display: grid;
     }
     .fields {
       display: grid;
@@ -226,9 +212,12 @@
     .pad button:active {
       transform: translateY(1px);
     }
-    .pad button.wide {
+    .pad button[data-key="backspace"] {
       grid-column: span 2;
       font-size: 18px;
+    }
+    .pad[data-pad-layout="single"] .pad-grid [data-key="zero"] {
+      grid-column: span 2;
     }
     .actions {
       display: flex;
@@ -270,75 +259,3 @@
       }
     }
   </style>
-</head>
-<body>
-  <header>Classic keypad calculator</header>
-  <main>
-    <section class="fields">
-      <article class="operand-card" data-field="A">
-        <h2>Left operand</h2>
-        <div class="value" data-field-value="A">0</div>
-      </article>
-      <article class="operand-card" data-field="B">
-        <h2>Right operand</h2>
-        <div class="value" data-field-value="B">0</div>
-      </article>
-    </section>
-
-    <section class="operations">
-      <button type="button" data-op="+">+</button>
-      <button type="button" data-op="−">−</button>
-      <button type="button" data-op="×" class="is-active">×</button>
-      <button type="button" data-op=":">:</button>
-    </section>
-
-    <section class="result-card">
-      <span class="label">Result</span>
-      <span class="value" data-result-value>0</span>
-    </section>
-
-    <section class="lock-control">
-      <button type="button" data-action="toggle-lock">
-        Input locked: <strong data-lock-display>Left operand</strong>
-        <span data-lock-subtitle>Tap to switch to the right operand</span>
-      </button>
-      <div class="lock-indicators">
-        <div class="pill is-active" data-latch-indicator="A">Left operand</div>
-        <div class="pill" data-latch-indicator="B">Right operand</div>
-      </div>
-    </section>
-
-    <section class="pad" data-pad data-target="A">
-      <div class="pad-header">
-        <span>Number pad</span>
-        <strong>Lock → <span data-lock-display>Left operand</span></strong>
-      </div>
-      <div class="pad-grid">
-        <button type="button" data-digit="7">7</button>
-        <button type="button" data-digit="8">8</button>
-        <button type="button" data-digit="9">9</button>
-        <button type="button" data-digit="4">4</button>
-        <button type="button" data-digit="5">5</button>
-        <button type="button" data-digit="6">6</button>
-        <button type="button" data-digit="1">1</button>
-        <button type="button" data-digit="2">2</button>
-        <button type="button" data-digit="3">3</button>
-        <button type="button" data-action="sign">±</button>
-        <button type="button" data-digit="0" class="wide">0</button>
-        <button type="button" data-action="dot">.</button>
-        <button type="button" data-action="backspace" class="wide">⌫</button>
-      </div>
-    </section>
-
-    <section class="actions">
-      <button type="button" data-action="clear-all">Clear all</button>
-      <button type="button" data-action="swap-operands">Swap operands</button>
-    </section>
-
-    <p class="hint">Tap a card or use the lock toggle to choose which operand receives the next digits.</p>
-  </main>
-  <script type="module">
-    /*__SCRIPT__*/
-  </script>
-</body>
-</html>

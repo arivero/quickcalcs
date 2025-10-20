@@ -1,2 +1,8 @@
 node_modules/
-dist/
+
+# Allow HTML outputs but ignore other build artifacts
+/dist/*
+!/dist/**/*.html
+
+# Ignore generated screenshot assets (binary)
+docs/images/*.png

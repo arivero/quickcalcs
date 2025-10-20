@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Columnar Dual Calculator</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+  </style>
+  <style>
+    :root {
+      --bg: #05060a;
+      --surface: #0b101d;
+      --panel: #10182c;
+      --accent: #7ac3ff;
+      --accent-soft: rgba(122, 195, 255, 0.15);
+      --ink: #f3f7ff;
+      --muted: #8a96ad;
+      --border: rgba(255, 255, 255, 0.14);
+    }
+    body {
+      background: radial-gradient(1100px 680px at 50% -12%, #141d36, var(--bg));
+      color: var(--ink);
+      padding: clamp(16px, 4vw, 36px);
+      gap: clamp(16px, 4vw, 32px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      font-size: clamp(20px, 5vw, 30px);
+      letter-spacing: 0.4px;
+    }
+    main {
+      width: min(1080px, 100%);
+      display: grid;
+      gap: clamp(18px, 3vw, 28px);
+    }
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: clamp(18px, 4vw, 36px);
+    }
+    .operand-column {
+      background: var(--panel);
+      border-radius: 28px;
+      padding: clamp(18px, 3vw, 26px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: 16px;
+      position: relative;
+      overflow: hidden;
+    }
+    .operand-column::after {
+      content: "";
+      position: absolute;
+      inset: 12px;
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.04);
+      pointer-events: none;
+    }
+    .operand-column h2 {
+      margin: 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+    }
+    .operand-column .value {
+      font-size: clamp(30px, 6vw, 46px);
+      font-weight: 600;
+      text-align: right;
+      word-break: break-all;
+      padding: 6px 0;
+    }
+    .operand-column.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .digit-stack {
+      display: grid;
+      gap: 10px;
+    }
+    .digit-stack button,
+    .tools button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: rgba(15, 22, 39, 0.9);
+      color: var(--ink);
+      font-size: 18px;
+      font-weight: 500;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
+    }
+    .digit-stack button:hover,
+    .tools button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+    .digit-stack button:active,
+    .tools button:active {
+      transform: translateY(1px);
+    }
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .operations-panel {
+      background: var(--surface);
+      border-radius: 28px;
+      padding: clamp(18px, 4vw, 30px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      gap: clamp(16px, 3vw, 24px);
+    }
+    .operations {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .operations button {
+      min-width: 56px;
+      padding: 12px 14px;
+      font-size: 22px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(13, 19, 33, 0.92);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
+    }
+    .operations button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+    .operations button.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .result-card {
+      background: rgba(10, 15, 26, 0.85);
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: clamp(18px, 3vw, 26px);
+      text-align: center;
+      display: grid;
+      gap: 8px;
+    }
+    .result-card span.label {
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .result-card span.value {
+      font-size: clamp(34px, 7vw, 54px);
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .actions button {
+      flex: 1 1 220px;
+      padding: 14px 18px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(12, 18, 32, 0.92);
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      transition: transform 0.12s ease, border 0.12s ease;
+    }
+    .actions button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 600px;
+      margin: 0 auto;
+      line-height: 1.5;
+    }
+  </style>
+
+</head>
+<body class="layout-vertical">
+  <header>QuickCalcs — Columnar Dual</header>
+  <main>
+    <section class="columns">
+      <article class="operand-column" data-field="A">
+        <h2>Operand A</h2>
+        <div class="value" data-field-value="A">0</div>
+        <div class="digit-stack" data-pad="A">
+          <button type="button" data-digit="9">9</button>
+<button type="button" data-digit="8">8</button>
+<button type="button" data-digit="7">7</button>
+<button type="button" data-digit="6">6</button>
+<button type="button" data-digit="5">5</button>
+<button type="button" data-digit="4">4</button>
+<button type="button" data-digit="3">3</button>
+<button type="button" data-digit="2">2</button>
+<button type="button" data-digit="1">1</button>
+<button type="button" data-digit="0">0</button>
+        </div>
+        <div class="tools">
+          <button type="button" data-action="dot">.</button>
+<button type="button" data-action="sign">±</button>
+<button type="button" data-action="backspace">⌫</button>
+        </div>
+      </article>
+      <article class="operand-column" data-field="B">
+        <h2>Operand B</h2>
+        <div class="value" data-field-value="B">0</div>
+        <div class="digit-stack" data-pad="B">
+          <button type="button" data-digit="9">9</button>
+<button type="button" data-digit="8">8</button>
+<button type="button" data-digit="7">7</button>
+<button type="button" data-digit="6">6</button>
+<button type="button" data-digit="5">5</button>
+<button type="button" data-digit="4">4</button>
+<button type="button" data-digit="3">3</button>
+<button type="button" data-digit="2">2</button>
+<button type="button" data-digit="1">1</button>
+<button type="button" data-digit="0">0</button>
+        </div>
+        <div class="tools">
+          <button type="button" data-action="dot">.</button>
+<button type="button" data-action="sign">±</button>
+<button type="button" data-action="backspace">⌫</button>
+        </div>
+      </article>
+    </section>
+
+    <section class="operations-panel">
+      <div class="operations">
+        <button type="button" data-op="+">+</button>
+<button type="button" data-op="−">−</button>
+<button type="button" data-op="×" class="is-active">×</button>
+<button type="button" data-op=":" aria-label="Divide">:</button>
+      </div>
+      <div class="result-card">
+        <span class="label">Result</span>
+<span class="value" data-result-value>0</span>
+      </div>
+      <div class="actions">
+        <button type="button" data-action="clear-all">Clear all</button>
+<button type="button" data-action="swap-operands">Swap operands</button>
+      </div>
+    </section>
+
+    <p class="hint">Use the left column to enter digits for operand A and the right column for operand B. Operations apply to the current numbers instantly.</p>
+  </main>
+
+  <script type="module">
+  // src/variants/shared/mountDualOperandCalculator.js
+function mountDualOperandCalculator(options = {}) {
+  var _a;
+  const {
+    operations = ["+", "\u2212", "\xD7", ":"],
+    selectors = {
+      fieldValueA: '[data-field-value="A"]',
+      fieldValueB: '[data-field-value="B"]',
+      fieldA: '[data-field="A"]',
+      fieldB: '[data-field="B"]',
+      resultValue: "[data-result-value]",
+      operationButtons: "[data-op]",
+      clearButton: '[data-action="clear-all"]',
+      swapButton: '[data-action="swap-operands"]',
+      padRoot: "[data-pad]"
+    },
+    resolvePadTarget
+  } = options;
+  const fieldValues = {
+    A: document.querySelector(selectors.fieldValueA),
+    B: document.querySelector(selectors.fieldValueB)
+  };
+  const fieldCards = {
+    A: document.querySelector(selectors.fieldA),
+    B: document.querySelector(selectors.fieldB)
+  };
+  const resultValue = document.querySelector(selectors.resultValue);
+  const opButtons = Array.from(document.querySelectorAll(selectors.operationButtons));
+  const clearBtn = document.querySelector(selectors.clearButton);
+  const swapBtn = document.querySelector(selectors.swapButton);
+  if (!fieldValues.A || !fieldValues.B || !resultValue) {
+    console.warn("Dual operand calculator could not mount: missing elements.");
+    return;
+  }
+  let aStr = "";
+  let bStr = "";
+  let op = (_a = operations[2]) != null ? _a : "\xD7";
+  let lastActive = "A";
+  const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive }) : ({ pad }) => pad.getAttribute("data-pad");
+  function displayValue(s) {
+    if (s === "") return "0";
+    return s;
+  }
+  function normalizeZeros(s) {
+    const neg = s.startsWith("-");
+    let t = neg ? s.slice(1) : s;
+    if (t.startsWith("0") && !t.startsWith("0.")) {
+      t = t.replace(/^0+(?=\d)/, "");
+      if (t === "") t = "0";
+    }
+    return neg ? "-" + t : t;
+  }
+  function getOperand(which) {
+    return which === "A" ? aStr : bStr;
+  }
+  function setOperand(which, value) {
+    if (which === "A") aStr = value;
+    else bStr = value;
+  }
+  function appendDigit(which, digit) {
+    let s = getOperand(which);
+    if (s === "-") s = "-0";
+    if (s === "") s = "0";
+    s += digit;
+    setOperand(which, normalizeZeros(s));
+  }
+  function appendDot(which) {
+    let s = getOperand(which);
+    if (s === "" || s === "-") s += "0";
+    if (!s.includes(".")) s += ".";
+    setOperand(which, s);
+  }
+  function toggleSign(which) {
+    let s = getOperand(which);
+    if (s.startsWith("-")) s = s.slice(1);
+    else s = "-" + (s || "");
+    setOperand(which, s);
+  }
+  function backspace(which) {
+    let s = getOperand(which);
+    if (s.length === 0) return;
+    s = s.slice(0, -1);
+    setOperand(which, s);
+  }
+  function computeResult() {
+    const A = Number(aStr);
+    const B = Number(bStr);
+    if (!Number.isFinite(A) || !Number.isFinite(B)) return "\u2014";
+    switch (op) {
+      case "+":
+        return String(A + B);
+      case "\u2212":
+        return String(A - B);
+      case "\xD7":
+        return String(A * B);
+      case ":":
+        return B === 0 ? "\u221E" : String(A / B);
+      default:
+        return "\u2014";
+    }
+  }
+  function refresh() {
+    var _a2, _b;
+    fieldValues.A.textContent = displayValue(aStr);
+    fieldValues.B.textContent = displayValue(bStr);
+    resultValue.textContent = computeResult();
+    opButtons.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.op === op);
+    });
+    (_a2 = fieldCards.A) == null ? void 0 : _a2.classList.toggle("is-active", lastActive === "A");
+    (_b = fieldCards.B) == null ? void 0 : _b.classList.toggle("is-active", lastActive === "B");
+  }
+  function handlePadButton(target, btn) {
+    if (!target) return;
+    if (btn.dataset.digit !== void 0) {
+      appendDigit(target, btn.dataset.digit);
+    } else {
+      switch (btn.dataset.action) {
+        case "dot":
+          appendDot(target);
+          break;
+        case "sign":
+          toggleSign(target);
+          break;
+        case "backspace":
+          backspace(target);
+          break;
+        default:
+          break;
+      }
+    }
+    lastActive = target;
+    refresh();
+  }
+  document.querySelectorAll(selectors.padRoot).forEach((pad) => {
+    pad.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const target = determinePadTarget({ pad, button: btn });
+        if (target !== "A" && target !== "B") return;
+        handlePadButton(target, btn);
+      });
+    });
+  });
+  opButtons.forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const next = btn.dataset.op;
+      if (!operations.includes(next)) return;
+      op = next;
+      refresh();
+    });
+  });
+  clearBtn == null ? void 0 : clearBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    aStr = "";
+    bStr = "";
+    lastActive = "A";
+    refresh();
+  });
+  swapBtn == null ? void 0 : swapBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const tmp = aStr;
+    aStr = bStr;
+    bStr = tmp;
+    lastActive = lastActive === "A" ? "B" : "A";
+    refresh();
+  });
+  refresh();
+  return {
+    getActiveOperand() {
+      return lastActive;
+    },
+    setActiveOperand(which) {
+      if (which !== "A" && which !== "B") return;
+      lastActive = which;
+      refresh();
+    }
+  };
+}
+
+// src/variants/columnar-dual/index.js
+mountDualOperandCalculator();
+  </script>
+</body>
+</html>

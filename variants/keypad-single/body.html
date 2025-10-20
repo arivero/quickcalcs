@@ -1,0 +1,48 @@
+  <header>Classic keypad calculator</header>
+  <main>
+    <section class="fields">
+      <article class="operand-card" data-field="A">
+        <h2>Left operand</h2>
+        <div class="value" data-field-value="A">0</div>
+      </article>
+      <article class="operand-card" data-field="B">
+        <h2>Right operand</h2>
+        <div class="value" data-field-value="B">0</div>
+      </article>
+    </section>
+
+    <section class="operations">
+      {{> variants/shared/fragments/dual-operations-buttons.html }}
+    </section>
+
+    <section class="result-card">
+      {{> variants/shared/fragments/dual-result-inner.html }}
+    </section>
+
+    <section class="lock-control">
+      <button type="button" data-action="toggle-lock">
+        Input locked: <strong data-lock-display>Left operand</strong>
+        <span data-lock-subtitle>Tap to switch to the right operand</span>
+      </button>
+      <div class="lock-indicators">
+        <div class="pill is-active" data-latch-indicator="A">Left operand</div>
+        <div class="pill" data-latch-indicator="B">Right operand</div>
+      </div>
+    </section>
+
+    <section class="pad" data-pad data-target="A" data-pad-layout="single">
+      <div class="pad-header">
+        <span>Number pad</span>
+        <strong>Lock → <span data-lock-display>Left operand</span></strong>
+      </div>
+      <div class="pad-grid">
+        {{> variants/shared/fragments/keypad-grid.html }}
+      </div>
+    </section>
+
+    <section class="actions">
+      {{> variants/shared/fragments/dual-actions-buttons.html }}
+    </section>
+
+    <p class="hint">Tap a card or use the lock toggle to choose which operand receives the next digits.</p>
+  </main>

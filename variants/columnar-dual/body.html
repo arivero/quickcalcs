@@ -1,0 +1,39 @@
+  <header>QuickCalcs — Columnar Dual</header>
+  <main>
+    <section class="columns">
+      <article class="operand-column" data-field="A">
+        <h2>Operand A</h2>
+        <div class="value" data-field-value="A">0</div>
+        <div class="digit-stack" data-pad="A">
+          {{> variants/shared/fragments/columnar-digit-stack.html }}
+        </div>
+        <div class="tools">
+          {{> variants/shared/fragments/columnar-tools.html }}
+        </div>
+      </article>
+      <article class="operand-column" data-field="B">
+        <h2>Operand B</h2>
+        <div class="value" data-field-value="B">0</div>
+        <div class="digit-stack" data-pad="B">
+          {{> variants/shared/fragments/columnar-digit-stack.html }}
+        </div>
+        <div class="tools">
+          {{> variants/shared/fragments/columnar-tools.html }}
+        </div>
+      </article>
+    </section>
+
+    <section class="operations-panel">
+      <div class="operations">
+        {{> variants/shared/fragments/dual-operations-buttons.html }}
+      </div>
+      <div class="result-card">
+        {{> variants/shared/fragments/dual-result-inner.html }}
+      </div>
+      <div class="actions">
+        {{> variants/shared/fragments/dual-actions-buttons.html }}
+      </div>
+    </section>
+
+    <p class="hint">Use the left column to enter digits for operand A and the right column for operand B. Operations apply to the current numbers instantly.</p>
+  </main>

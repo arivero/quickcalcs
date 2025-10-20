@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Classic Keypad Calculator</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+  </style>
+  <style>
+    :root {
+      --bg: #0a101f;
+      --surface: rgba(13, 21, 38, 0.92);
+      --card: rgba(17, 27, 46, 0.96);
+      --ink: #f4f7ff;
+      --muted: #92a2c2;
+      --accent: #7eb0ff;
+      --accent-soft: rgba(126, 176, 255, 0.18);
+      --border: rgba(255, 255, 255, 0.12);
+    }
+    body {
+      background: radial-gradient(1100px 800px at 50% -10%, #182238, var(--bg));
+      color: var(--ink);
+      padding: clamp(14px, 5vw, 36px);
+      gap: clamp(14px, 3vw, 24px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    header {
+      text-align: center;
+      font-size: clamp(22px, 5vw, 32px);
+      letter-spacing: 0.3px;
+    }
+    main {
+      width: min(540px, 100%);
+      gap: clamp(14px, 3vw, 28px);
+      background: var(--surface);
+      border-radius: 26px;
+      padding: clamp(18px, 4vw, 32px);
+      box-shadow: 0 32px 70px rgba(4, 9, 25, 0.6);
+      display: grid;
+    }
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(10px, 2vw, 18px);
+    }
+    .operand-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 16px 18px 22px;
+      border: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      cursor: pointer;
+    }
+    .operand-card:hover {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .operand-card.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .operand-card h2 {
+      margin: 0;
+      font-size: 12px;
+      letter-spacing: 0.35px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .operand-card .value {
+      font-size: clamp(30px, 7vw, 46px);
+      font-weight: 600;
+      text-align: right;
+      min-height: 1.2em;
+      word-break: break-all;
+    }
+    .result-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 18px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
+    .result-card span.label {
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .result-card span.value {
+      font-size: clamp(34px, 8vw, 54px);
+      font-weight: 700;
+      word-break: break-all;
+    }
+    .operations {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .operations button {
+      min-width: 58px;
+      padding: 12px 16px;
+      font-size: 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(13, 20, 35, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.15s ease, border 0.15s ease;
+    }
+    .operations button:hover {
+      transform: translateY(-1px);
+    }
+    .operations button.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .lock-control {
+      background: rgba(12, 18, 33, 0.92);
+      border-radius: 20px;
+      padding: 16px 18px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: 12px;
+    }
+    .lock-control button {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--ink);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(15, 23, 40, 0.88);
+      padding: 12px 16px;
+      border-radius: 14px;
+      cursor: pointer;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    .lock-control button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .lock-control button span {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+    }
+    .lock-indicators {
+      display: flex;
+      gap: 8px;
+    }
+    .lock-indicators .pill {
+      flex: 1 1 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 22, 36, 0.9);
+      font-size: 13px;
+      letter-spacing: 0.3px;
+      text-align: center;
+      color: var(--muted);
+      transition: border 0.15s ease, background 0.15s ease, color 0.15s ease;
+    }
+    .lock-indicators .pill.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--ink);
+      font-weight: 600;
+    }
+    .pad {
+      background: rgba(11, 18, 31, 0.9);
+      border-radius: 24px;
+      padding: clamp(16px, 4vw, 28px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      gap: clamp(12px, 3vw, 20px);
+    }
+    .pad-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-size: 12px;
+    }
+    .pad-header strong {
+      color: var(--ink);
+      font-size: 13px;
+    }
+    .pad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .pad button {
+      font-size: 20px;
+      padding: 16px 0;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(16, 25, 41, 0.95);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
+    }
+    .pad button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+    .pad button:active {
+      transform: translateY(1px);
+    }
+    .pad button[data-key="backspace"] {
+      grid-column: span 2;
+      font-size: 18px;
+    }
+    .pad[data-pad-layout="single"] .pad-grid [data-key="zero"] {
+      grid-column: span 2;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions button {
+      flex: 1 1 200px;
+      padding: 14px 16px;
+      font-size: 15px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(12, 19, 32, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    .actions button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+    @media (max-width: 520px) {
+      main {
+        border-radius: 20px;
+      }
+      .fields {
+        grid-template-columns: 1fr;
+      }
+      .pad {
+        padding: clamp(14px, 6vw, 24px);
+      }
+    }
+  </style>
+
+</head>
+<body class="layout-vertical">
+  <header>Classic keypad calculator</header>
+  <main>
+    <section class="fields">
+      <article class="operand-card" data-field="A">
+        <h2>Left operand</h2>
+        <div class="value" data-field-value="A">0</div>
+      </article>
+      <article class="operand-card" data-field="B">
+        <h2>Right operand</h2>
+        <div class="value" data-field-value="B">0</div>
+      </article>
+    </section>
+
+    <section class="operations">
+      <button type="button" data-op="+">+</button>
+<button type="button" data-op="−">−</button>
+<button type="button" data-op="×" class="is-active">×</button>
+<button type="button" data-op=":" aria-label="Divide">:</button>
+    </section>
+
+    <section class="result-card">
+      <span class="label">Result</span>
+<span class="value" data-result-value>0</span>
+    </section>
+
+    <section class="lock-control">
+      <button type="button" data-action="toggle-lock">
+        Input locked: <strong data-lock-display>Left operand</strong>
+        <span data-lock-subtitle>Tap to switch to the right operand</span>
+      </button>
+      <div class="lock-indicators">
+        <div class="pill is-active" data-latch-indicator="A">Left operand</div>
+        <div class="pill" data-latch-indicator="B">Right operand</div>
+      </div>
+    </section>
+
+    <section class="pad" data-pad data-target="A" data-pad-layout="single">
+      <div class="pad-header">
+        <span>Number pad</span>
+        <strong>Lock → <span data-lock-display>Left operand</span></strong>
+      </div>
+      <div class="pad-grid">
+        <button type="button" data-digit="7">7</button>
+<button type="button" data-digit="8">8</button>
+<button type="button" data-digit="9">9</button>
+<button type="button" data-digit="4">4</button>
+<button type="button" data-digit="5">5</button>
+<button type="button" data-digit="6">6</button>
+<button type="button" data-digit="1">1</button>
+<button type="button" data-digit="2">2</button>
+<button type="button" data-digit="3">3</button>
+<button type="button" data-action="sign">±</button>
+<button type="button" data-digit="0" data-key="zero">0</button>
+<button type="button" data-action="dot">.</button>
+<button type="button" data-action="backspace" data-key="backspace">⌫</button>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button type="button" data-action="clear-all">Clear all</button>
+<button type="button" data-action="swap-operands">Swap operands</button>
+    </section>
+
+    <p class="hint">Tap a card or use the lock toggle to choose which operand receives the next digits.</p>
+  </main>
+
+  <script type="module">
+  // src/variants/shared/mountDualOperandCalculator.js
+function mountDualOperandCalculator(options = {}) {
+  var _a;
+  const {
+    operations = ["+", "\u2212", "\xD7", ":"],
+    selectors = {
+      fieldValueA: '[data-field-value="A"]',
+      fieldValueB: '[data-field-value="B"]',
+      fieldA: '[data-field="A"]',
+      fieldB: '[data-field="B"]',
+      resultValue: "[data-result-value]",
+      operationButtons: "[data-op]",
+      clearButton: '[data-action="clear-all"]',
+      swapButton: '[data-action="swap-operands"]',
+      padRoot: "[data-pad]"
+    },
+    resolvePadTarget
+  } = options;
+  const fieldValues = {
+    A: document.querySelector(selectors.fieldValueA),
+    B: document.querySelector(selectors.fieldValueB)
+  };
+  const fieldCards2 = {
+    A: document.querySelector(selectors.fieldA),
+    B: document.querySelector(selectors.fieldB)
+  };
+  const resultValue = document.querySelector(selectors.resultValue);
+  const opButtons = Array.from(document.querySelectorAll(selectors.operationButtons));
+  const clearBtn = document.querySelector(selectors.clearButton);
+  const swapBtn = document.querySelector(selectors.swapButton);
+  if (!fieldValues.A || !fieldValues.B || !resultValue) {
+    console.warn("Dual operand calculator could not mount: missing elements.");
+    return;
+  }
+  let aStr = "";
+  let bStr = "";
+  let op = (_a = operations[2]) != null ? _a : "\xD7";
+  let lastActive = "A";
+  const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive }) : ({ pad }) => pad.getAttribute("data-pad");
+  function displayValue(s) {
+    if (s === "") return "0";
+    return s;
+  }
+  function normalizeZeros(s) {
+    const neg = s.startsWith("-");
+    let t = neg ? s.slice(1) : s;
+    if (t.startsWith("0") && !t.startsWith("0.")) {
+      t = t.replace(/^0+(?=\d)/, "");
+      if (t === "") t = "0";
+    }
+    return neg ? "-" + t : t;
+  }
+  function getOperand(which) {
+    return which === "A" ? aStr : bStr;
+  }
+  function setOperand(which, value) {
+    if (which === "A") aStr = value;
+    else bStr = value;
+  }
+  function appendDigit(which, digit) {
+    let s = getOperand(which);
+    if (s === "-") s = "-0";
+    if (s === "") s = "0";
+    s += digit;
+    setOperand(which, normalizeZeros(s));
+  }
+  function appendDot(which) {
+    let s = getOperand(which);
+    if (s === "" || s === "-") s += "0";
+    if (!s.includes(".")) s += ".";
+    setOperand(which, s);
+  }
+  function toggleSign(which) {
+    let s = getOperand(which);
+    if (s.startsWith("-")) s = s.slice(1);
+    else s = "-" + (s || "");
+    setOperand(which, s);
+  }
+  function backspace(which) {
+    let s = getOperand(which);
+    if (s.length === 0) return;
+    s = s.slice(0, -1);
+    setOperand(which, s);
+  }
+  function computeResult() {
+    const A = Number(aStr);
+    const B = Number(bStr);
+    if (!Number.isFinite(A) || !Number.isFinite(B)) return "\u2014";
+    switch (op) {
+      case "+":
+        return String(A + B);
+      case "\u2212":
+        return String(A - B);
+      case "\xD7":
+        return String(A * B);
+      case ":":
+        return B === 0 ? "\u221E" : String(A / B);
+      default:
+        return "\u2014";
+    }
+  }
+  function refresh() {
+    var _a2, _b;
+    fieldValues.A.textContent = displayValue(aStr);
+    fieldValues.B.textContent = displayValue(bStr);
+    resultValue.textContent = computeResult();
+    opButtons.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.op === op);
+    });
+    (_a2 = fieldCards2.A) == null ? void 0 : _a2.classList.toggle("is-active", lastActive === "A");
+    (_b = fieldCards2.B) == null ? void 0 : _b.classList.toggle("is-active", lastActive === "B");
+  }
+  function handlePadButton(target, btn) {
+    if (!target) return;
+    if (btn.dataset.digit !== void 0) {
+      appendDigit(target, btn.dataset.digit);
+    } else {
+      switch (btn.dataset.action) {
+        case "dot":
+          appendDot(target);
+          break;
+        case "sign":
+          toggleSign(target);
+          break;
+        case "backspace":
+          backspace(target);
+          break;
+        default:
+          break;
+      }
+    }
+    lastActive = target;
+    refresh();
+  }
+  document.querySelectorAll(selectors.padRoot).forEach((pad) => {
+    pad.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const target = determinePadTarget({ pad, button: btn });
+        if (target !== "A" && target !== "B") return;
+        handlePadButton(target, btn);
+      });
+    });
+  });
+  opButtons.forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const next = btn.dataset.op;
+      if (!operations.includes(next)) return;
+      op = next;
+      refresh();
+    });
+  });
+  clearBtn == null ? void 0 : clearBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    aStr = "";
+    bStr = "";
+    lastActive = "A";
+    refresh();
+  });
+  swapBtn == null ? void 0 : swapBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const tmp = aStr;
+    aStr = bStr;
+    bStr = tmp;
+    lastActive = lastActive === "A" ? "B" : "A";
+    refresh();
+  });
+  refresh();
+  return {
+    getActiveOperand() {
+      return lastActive;
+    },
+    setActiveOperand(which) {
+      if (which !== "A" && which !== "B") return;
+      lastActive = which;
+      refresh();
+    }
+  };
+}
+
+// src/variants/keypad-single/index.js
+var latchState = { target: "A" };
+var controller = mountDualOperandCalculator({
+  selectors: {
+    fieldValueA: '[data-field-value="A"]',
+    fieldValueB: '[data-field-value="B"]',
+    fieldA: '[data-field="A"]',
+    fieldB: '[data-field="B"]',
+    resultValue: "[data-result-value]",
+    operationButtons: "[data-op]",
+    clearButton: '[data-action="clear-all"]',
+    swapButton: '[data-action="swap-operands"]',
+    padRoot: "[data-pad]"
+  },
+  resolvePadTarget: () => latchState.target
+});
+var toggleLockBtn = document.querySelector('[data-action="toggle-lock"]');
+var lockDisplays = Array.from(document.querySelectorAll("[data-lock-display]"));
+var lockSubtitle = toggleLockBtn == null ? void 0 : toggleLockBtn.querySelector("[data-lock-subtitle]");
+var padRoot = document.querySelector("[data-pad]");
+var latchIndicators = Array.from(document.querySelectorAll("[data-latch-indicator]"));
+var fieldCards = Array.from(document.querySelectorAll("[data-field]"));
+function describeTarget(target) {
+  return target === "A" ? "Left operand" : "Right operand";
+}
+function syncLockState() {
+  const { target } = latchState;
+  controller.setActiveOperand(target);
+  toggleLockBtn == null ? void 0 : toggleLockBtn.setAttribute(
+    "aria-label",
+    `Toggle input lock (currently ${describeTarget(target).toLowerCase()})`
+  );
+  lockDisplays.forEach((el) => {
+    el.textContent = describeTarget(target);
+  });
+  if (lockSubtitle) {
+    const next = target === "A" ? "right" : "left";
+    lockSubtitle.textContent = `Tap to switch to the ${next} operand`;
+  }
+  padRoot == null ? void 0 : padRoot.setAttribute("data-target", target);
+  latchIndicators.forEach((indicator) => {
+    indicator.classList.toggle("is-active", indicator.dataset.latchIndicator === target);
+  });
+}
+function setLockTarget(next) {
+  if (next !== "A" && next !== "B") return;
+  latchState.target = next;
+  syncLockState();
+}
+toggleLockBtn == null ? void 0 : toggleLockBtn.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  setLockTarget(latchState.target === "A" ? "B" : "A");
+});
+fieldCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    const field = card.getAttribute("data-field");
+    setLockTarget(field);
+  });
+});
+syncLockState();
+  </script>
+</body>
+</html>

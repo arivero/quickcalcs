@@ -1,12 +1,5 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
-  <title>Columnar Dual Calculator</title>
   <style>
     :root {
-      color-scheme: dark;
       --bg: #05060a;
       --surface: #0b101d;
       --panel: #10182c;
@@ -16,25 +9,18 @@
       --muted: #8a96ad;
       --border: rgba(255, 255, 255, 0.14);
     }
-    * { box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      margin: 0;
-      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    body {
       background: radial-gradient(1100px 680px at 50% -12%, #141d36, var(--bg));
       color: var(--ink);
-    }
-    body {
+      padding: clamp(16px, 4vw, 36px);
+      gap: clamp(16px, 4vw, 32px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: clamp(16px, 4vw, 36px);
-      gap: clamp(16px, 4vw, 32px);
     }
     header {
       text-align: center;
       font-size: clamp(20px, 5vw, 30px);
-      font-weight: 700;
       letter-spacing: 0.4px;
     }
     main {
@@ -201,76 +187,3 @@
       line-height: 1.5;
     }
   </style>
-</head>
-<body>
-  <header>QuickCalcs — Columnar Dual</header>
-  <main>
-    <section class="columns">
-      <article class="operand-column" data-field="A">
-        <h2>Operand A</h2>
-        <div class="value" data-field-value="A">0</div>
-        <div class="digit-stack" data-pad="A">
-          <button data-digit="9">9</button>
-          <button data-digit="8">8</button>
-          <button data-digit="7">7</button>
-          <button data-digit="6">6</button>
-          <button data-digit="5">5</button>
-          <button data-digit="4">4</button>
-          <button data-digit="3">3</button>
-          <button data-digit="2">2</button>
-          <button data-digit="1">1</button>
-          <button data-digit="0">0</button>
-        </div>
-        <div class="tools">
-          <button data-action="dot">.</button>
-          <button data-action="sign">±</button>
-          <button data-action="backspace">⌫</button>
-        </div>
-      </article>
-      <article class="operand-column" data-field="B">
-        <h2>Operand B</h2>
-        <div class="value" data-field-value="B">0</div>
-        <div class="digit-stack" data-pad="B">
-          <button data-digit="9">9</button>
-          <button data-digit="8">8</button>
-          <button data-digit="7">7</button>
-          <button data-digit="6">6</button>
-          <button data-digit="5">5</button>
-          <button data-digit="4">4</button>
-          <button data-digit="3">3</button>
-          <button data-digit="2">2</button>
-          <button data-digit="1">1</button>
-          <button data-digit="0">0</button>
-        </div>
-        <div class="tools">
-          <button data-action="dot">.</button>
-          <button data-action="sign">±</button>
-          <button data-action="backspace">⌫</button>
-        </div>
-      </article>
-    </section>
-
-    <section class="operations-panel">
-      <div class="operations">
-        <button data-op="+">+</button>
-        <button data-op="−">−</button>
-        <button data-op="×" class="is-active">×</button>
-        <button data-op=":">:</button>
-      </div>
-      <div class="result-card">
-        <span class="label">Result</span>
-        <span class="value" data-result-value>0</span>
-      </div>
-      <div class="actions">
-        <button data-action="clear-all">Clear all</button>
-        <button data-action="swap-operands">Swap operands</button>
-      </div>
-    </section>
-
-    <p class="hint">Use the left column to enter digits for operand A and the right column for operand B. Operations apply to the current numbers instantly.</p>
-  </main>
-  <script type="module">
-    /*__SCRIPT__*/
-  </script>
-</body>
-</html>
