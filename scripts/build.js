@@ -7,12 +7,33 @@ import esbuild from 'esbuild';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = resolve(__dirname, '..');
 
+const args = process.argv.slice(2);
+const withTests = args.includes('--with-tests');
+
 const variants = [
   {
     slug: 'circular',
     entry: 'src/variants/circular/index.js',
     template: 'variants/circular/template.html',
     out: 'dist/circular.html',
+  },
+  {
+    slug: 'keypad-dual',
+    entry: 'src/variants/keypad-dual/index.js',
+    template: 'variants/keypad-dual/template.html',
+    out: 'dist/keypad-dual.html',
+  },
+  {
+    slug: 'keypad-single',
+    entry: 'src/variants/keypad-single/index.js',
+    template: 'variants/keypad-single/template.html',
+    out: 'dist/keypad-single.html',
+  },
+  {
+    slug: 'columnar-dual',
+    entry: 'src/variants/columnar-dual/index.js',
+    template: 'variants/columnar-dual/template.html',
+    out: 'dist/columnar-dual.html',
   },
 ];
 
@@ -30,6 +51,10 @@ async function buildVariant(variant) {
     format: 'esm',
     platform: 'browser',
     legalComments: 'none',
+    define: {
+      __INCLUDE_TESTS__: withTests ? 'true' : 'false',
+      'process.env.NODE_ENV': withTests ? '"development"' : '"production"',
+    },
   });
 
   if (!bundle.outputFiles || bundle.outputFiles.length === 0) {

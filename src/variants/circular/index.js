@@ -31,6 +31,7 @@
     };
 
     const DPR = Math.max(1, window.devicePixelRatio || 1);
+    let maybeRunTests = () => {};
 
     function resize() {
       const r = cv.getBoundingClientRect();
@@ -425,67 +426,35 @@
     cv.addEventListener('pointercancel', onUp, {passive:true});
     window.addEventListener('resize', resize);
 
-    // --- Minimal tests (open with #test in URL to run) ---
-    let testsRun = false;
-    function maybeRunTests(){ if (testsRun) return; if (!location.hash.includes('test')) return; testsRun = true; runTests(); }
-    function runTests(){
-      console.log('%cRunning canvas calculator tests…','color:#6ea8fe');
-      // 1) math with decimals
-      aStr='12.5'; bStr='3'; opIndex=1; console.assert(computeResult()==='37.5','12.5×3 should be 37.5');
-      // 1b) colon division math
-      aStr='5'; bStr='2'; opIndex=3; console.assert(computeResult()==='2.5','5:2 should be 2.5');
-      // 2) wheel angles mapping
-      const cxw=L.wheel.x, cyw=L.wheel.y, rw=L.wheel.r*0.8;
-      console.assert(angleToIndex(cxw, cyw - rw)===0,'Top sector should be +');
-      console.assert(angleToIndex(cxw + rw, cyw)===1,'Right sector should be ×');
-      console.assert(angleToIndex(cxw, cyw + rw)===2,'Bottom sector should be −');
-      console.assert(angleToIndex(cxw - rw, cyw)===3,'Left sector should be :');
-      // 3) dial order and top hits
-      const order = L.dial.cells.map(c=>c.label).join('');
-      console.assert(order==='.1234567890±','Dial order should be . ± 1..9 0 clockwise from top');
-      const rt=(L.dial.rInner+L.dial.rOuter)/2; const topHit=hitDial(L.dial.cx, L.dial.cy-rt);
-      console.assert(topHit && topHit.label==='.' ,'Top of dial should be decimal point');
-      // 4) sign toggle
-      enteringA=true; aStr='12'; toggleSign(); console.assert(aStr==='-12','± should toggle sign to negative'); toggleSign(); console.assert(aStr==='12','± toggles back to positive');
-      // 5) dot append rules
-      aStr=''; enteringA=true; appendDot(); console.assert(aStr==='0.','Empty + dot yields 0.'); appendDot(); console.assert(aStr==='0.','Only one dot allowed');
-      
-      // 6) draw() exists and runs
-      console.assert(typeof draw === 'function','draw() should be defined');
-      draw(); // sanity call
-      
-      // 7) hitDial for 11 o'clock (±)
-      const cellPM = L.dial.cells.find(c=>c.label==='±');
-      const rr2=(L.dial.rInner+L.dial.rOuter)/2; 
-      const hx = L.dial.cx + Math.cos(cellPM.am)*rr2; 
-      const hy = L.dial.cy + Math.sin(cellPM.am)*rr2; 
-      const h = hitDial(hx,hy);
-      console.assert(h && h.label==='±','11 o\'clock sector should be ±');
-      
-      // 7b) 3 o'clock should be '3', 6 o'clock should be '6'
-      const rr3=(L.dial.rInner+L.dial.rOuter)/2;
-      const rightHit = hitDial(L.dial.cx + rr3, L.dial.cy);
-      console.assert(rightHit && rightHit.label==='3','3 o\'clock sector should be 3');
-      const bottomHit = hitDial(L.dial.cx, L.dial.cy + rr3);
-      console.assert(bottomHit && bottomHit.label==='6','6 o\'clock sector should be 6');
-      
-      // 8) leading zero normalization
-      enteringA=true; aStr=''; appendDigit('0'); appendDigit('0'); appendDigit('5'); console.assert(aStr==='5','Leading zeros should collapse to 5');
-      
-      // 9) B dot + sign behavior
-      enteringA=false; bStr=''; appendDot(); toggleSign(); console.assert(bStr==='-0.','B supports sign then dot as -0.');
-
-      // 10) separators offset check: +15° from 12→ '1', -15° from 12→ '±'
-      const step12 = (Math.PI*2)/12;
-      const rr4 = (L.dial.rInner+L.dial.rOuter)/2;
-      const angCW  = -Math.PI/2 + (step12/2 + 0.02);
-      const angCCW = -Math.PI/2 - (step12/2 + 0.02);
-      const xCW  = L.dial.cx + Math.cos(angCW)*rr4,  yCW  = L.dial.cy + Math.sin(angCW)*rr4;
-      const xCCW = L.dial.cx + Math.cos(angCCW)*rr4, yCCW = L.dial.cy + Math.sin(angCCW)*rr4;
-      console.assert(hitDial(xCW,yCW)?.label==='1', '+15° from 12 o\'clock should be 1');
-      console.assert(hitDial(xCCW,yCCW)?.label==='±', '-15° from 12 o\'clock should be ±');
-
-      console.log('%cAll tests passed','color:#3dd9b6');
+    if (typeof __INCLUDE_TESTS__ !== 'undefined' && __INCLUDE_TESTS__) {
+      import('./tests.js').then(({ installCircularTests }) => {
+        const tester = installCircularTests({
+          getLayout: () => L,
+          state: {
+            getA: () => aStr,
+            setA: (value) => { aStr = value; },
+            getB: () => bStr,
+            setB: (value) => { bStr = value; },
+            getOpIndex: () => opIndex,
+            setOpIndex: (value) => { opIndex = value; },
+            getEnteringA: () => enteringA,
+            setEnteringA: (value) => { enteringA = value; },
+          },
+          computeResult,
+          angleToIndex,
+          hitDial,
+          toggleSign,
+          appendDot,
+          appendDigit,
+          draw,
+          console,
+          shouldRun: () => typeof location !== 'undefined' && location.hash.includes('test'),
+        });
+        maybeRunTests = tester.maybeRunTests;
+        maybeRunTests();
+      }).catch((err) => {
+        console.error('Failed to load test harness', err);
+      });
     }
 
     // Initial mount

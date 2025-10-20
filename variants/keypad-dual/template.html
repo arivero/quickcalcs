@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Dual Keypad Calculator</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0d1322;
+      --card: #121b31;
+      --ink: #f1f5ff;
+      --muted: #8f9db5;
+      --accent: #6ea8fe;
+      --accent-soft: rgba(110, 168, 254, 0.18);
+      --surface: rgba(17, 26, 46, 0.86);
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(1200px 800px at 50% -10%, #1a2340, var(--bg));
+      color: var(--ink);
+    }
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: clamp(12px, 4vw, 32px);
+      gap: clamp(12px, 3vw, 24px);
+    }
+    header {
+      text-align: center;
+      font-size: clamp(20px, 4vw, 28px);
+      font-weight: 700;
+      letter-spacing: 0.3px;
+    }
+    main {
+      width: min(960px, 100%);
+      display: grid;
+      gap: clamp(16px, 3vw, 28px);
+      grid-template-rows: auto auto 1fr auto;
+      background: var(--surface);
+      border-radius: 24px;
+      padding: clamp(16px, 3vw, 32px);
+      box-shadow: 0 30px 80px rgba(5, 10, 30, 0.55);
+    }
+    .fields {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: clamp(12px, 2vw, 20px);
+      align-items: center;
+    }
+    .operand-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 14px 18px 20px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .operand-card.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+    .operand-card h2 {
+      margin: 0;
+      font-size: 13px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .operand-card .value {
+      font-size: clamp(28px, 6vw, 42px);
+      font-weight: 600;
+      text-align: right;
+      min-height: 1.2em;
+      word-break: break-all;
+    }
+    .operations {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+    }
+    .operations button {
+      min-width: 48px;
+      padding: 12px 14px;
+      font-size: 20px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(15, 22, 39, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.15s ease, border 0.15s ease;
+    }
+    .operations button:hover {
+      transform: translateY(-1px);
+    }
+    .operations button.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+    .result-card {
+      background: var(--card);
+      border-radius: 18px;
+      padding: 18px 22px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .result-card span.label {
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .result-card span.value {
+      font-size: clamp(30px, 6vw, 48px);
+      font-weight: 700;
+      text-align: center;
+      word-break: break-all;
+    }
+    .pads {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: clamp(12px, 3vw, 28px);
+    }
+    .pad {
+      background: rgba(12, 18, 34, 0.85);
+      border-radius: 22px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .pad h3 {
+      margin: 0;
+      font-size: 14px;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .pad-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    .pad button {
+      font-size: 18px;
+      padding: 14px 0;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(14, 21, 36, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
+    }
+    .pad button:hover {
+      transform: translateY(-1px);
+      border-color: var(--accent);
+    }
+    .pad button:active {
+      transform: translateY(1px);
+    }
+    .pad button.wide {
+      grid-column: span 3;
+      font-size: 16px;
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions button {
+      flex: 1 1 200px;
+      padding: 14px 16px;
+      font-size: 15px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(13, 19, 34, 0.9);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    .actions button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+    @media (max-width: 860px) {
+      main {
+        grid-template-rows: auto auto auto auto;
+      }
+      .fields {
+        grid-template-columns: 1fr;
+      }
+      .pads {
+        grid-template-columns: 1fr;
+      }
+      .operations {
+        flex-wrap: wrap;
+      }
+      .operations button {
+        flex: 1 1 calc(50% - 8px);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>QuickCalcs — Dual Keypads</header>
+  <main>
+    <section class="fields">
+      <article class="operand-card" data-field="A">
+        <h2>Operand A</h2>
+        <div class="value" data-field-value="A">0</div>
+      </article>
+      <div class="operations">
+        <button data-op="+">+</button>
+        <button data-op="−">−</button>
+        <button data-op="×" class="is-active">×</button>
+        <button data-op=":" aria-label="Divide">:</button>
+      </div>
+      <article class="operand-card" data-field="B">
+        <h2>Operand B</h2>
+        <div class="value" data-field-value="B">0</div>
+      </article>
+    </section>
+
+    <section class="result-card">
+      <span class="label">Result</span>
+      <span class="value" data-result-value>0</span>
+    </section>
+
+    <section class="pads">
+      <div class="pad" data-pad="A">
+        <h3>Type for A</h3>
+        <div class="pad-grid">
+          <button data-digit="7">7</button>
+          <button data-digit="8">8</button>
+          <button data-digit="9">9</button>
+          <button data-digit="4">4</button>
+          <button data-digit="5">5</button>
+          <button data-digit="6">6</button>
+          <button data-digit="1">1</button>
+          <button data-digit="2">2</button>
+          <button data-digit="3">3</button>
+          <button data-action="sign">±</button>
+          <button data-digit="0">0</button>
+          <button data-action="dot">.</button>
+          <button class="wide" data-action="backspace">⌫</button>
+        </div>
+      </div>
+      <div class="pad" data-pad="B">
+        <h3>Type for B</h3>
+        <div class="pad-grid">
+          <button data-digit="7">7</button>
+          <button data-digit="8">8</button>
+          <button data-digit="9">9</button>
+          <button data-digit="4">4</button>
+          <button data-digit="5">5</button>
+          <button data-digit="6">6</button>
+          <button data-digit="1">1</button>
+          <button data-digit="2">2</button>
+          <button data-digit="3">3</button>
+          <button data-action="sign">±</button>
+          <button data-digit="0">0</button>
+          <button data-action="dot">.</button>
+          <button class="wide" data-action="backspace">⌫</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button data-action="clear-all">Clear A &amp; B</button>
+      <button data-action="swap-operands">Swap operands</button>
+    </section>
+  </main>
+  <p class="hint">Each keypad feeds its own operand. Choose an operation in the center, then type on either column to compose the numbers. Results update instantly. Works offline, no equals needed.</p>
+
+  <script type="module">
+  /*__SCRIPT__*/
+  </script>
+</body>
+</html>
