@@ -1,0 +1,44 @@
+  <style>
+    :root {
+      --bg: #0f1525;
+      --card: #111a2c;
+      --ink: #eaf2ff;
+      --muted: #96a1b2;
+      --accent: #6ea8fe;
+      --accent-emerald: #3dd9b6;
+    }
+    body {
+      background: radial-gradient(1200px 800px at 50% -10%, #1a2340, var(--bg));
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+      color: var(--ink);
+      padding: 10px;
+      gap: 0;
+    }
+    header {
+      padding: 10px 0 0;
+      font-weight: 700;
+      letter-spacing: 0.2px;
+    }
+    #wrap {
+      display: grid;
+      place-items: center;
+      width: 100%;
+      height: calc(100% - 42px);
+    }
+    canvas {
+      width: min(820px, 100%);
+      height: 100%;
+      display: block;
+      touch-action: none;
+    }
+    .hint {
+      position: fixed;
+      bottom: 8px;
+      left: 0;
+      right: 0;
+      text-align: center;
+      color: var(--muted);
+      font-size: 12px;
+      pointer-events: none;
+    }
+  </style>
