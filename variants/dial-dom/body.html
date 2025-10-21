@@ -1,0 +1,55 @@
+  <main>
+    <header>Swipe Calculator — <span>DOM Dial</span></header>
+    <section class="fields">
+      <button type="button" class="operand-card" data-field="A">
+        <span class="label">Operand A</span>
+        <span class="value" data-field-value="A">0</span>
+      </button>
+      <button type="button" class="operand-card" data-field="B">
+        <span class="label">Operand B</span>
+        <span class="value" data-field-value="B">0</span>
+      </button>
+    </section>
+    <section class="result-card">
+      <span class="label">Result</span>
+      <span class="value" data-result-value>0</span>
+    </section>
+    <section class="wheel">
+      <div class="wheel-ring">
+        <button type="button" data-op="+">+</button>
+        <button type="button" data-op="−">−</button>
+        <button type="button" data-op="×" class="is-active">×</button>
+        <button type="button" data-op=":">:</button>
+        <div class="wheel-core" data-operation-value>×</div>
+      </div>
+    </section>
+    <section class="dial">
+      <div class="dial-ring" data-pad data-pad-layout="dial">
+        <button type="button" data-key="center" data-action="toggle-active">
+          <strong data-active-indicator>A</strong>
+          <span>Active</span>
+        </button>
+        <button type="button" data-key="dot" data-action="dot" style="--angle:-90deg;">.</button>
+        <button type="button" data-key="1" data-digit="1" style="--angle:-60deg;">1</button>
+        <button type="button" data-key="2" data-digit="2" style="--angle:-30deg;">2</button>
+        <button type="button" data-key="3" data-digit="3" style="--angle:0deg;">3</button>
+        <button type="button" data-key="4" data-digit="4" style="--angle:30deg;">4</button>
+        <button type="button" data-key="5" data-digit="5" style="--angle:60deg;">5</button>
+        <button type="button" data-key="6" data-digit="6" style="--angle:90deg;">6</button>
+        <button type="button" data-key="7" data-digit="7" style="--angle:120deg;">7</button>
+        <button type="button" data-key="8" data-digit="8" style="--angle:150deg;">8</button>
+        <button type="button" data-key="9" data-digit="9" style="--angle:180deg;">9</button>
+        <button type="button" data-key="0" data-digit="0" style="--angle:210deg;">0</button>
+        <button type="button" data-key="sign" data-action="sign" style="--angle:240deg;">±</button>
+        <button type="button" data-key="backspace" data-action="backspace" style="--angle:90deg; --radius:30%;">⌫</button>
+      </div>
+      <div class="dial-actions">
+        <button type="button" data-action="clear-all">Reset All</button>
+        <button type="button" data-action="swap-operands">Swap A ↔ B</button>
+      </div>
+    </section>
+    <p class="hint">
+      Tap the glowing badge to toggle the active operand. The circular keypad mirrors the canvas dial: dot at 12 o'clock, ± at 11,
+      and digits flowing clockwise. Use the wheel to pick an operation.
+    </p>
+  </main>

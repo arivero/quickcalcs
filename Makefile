@@ -6,7 +6,7 @@ ESBUILD ?= $(shell if command -v esbuild >/dev/null 2>&1; then command -v esbuil
 ROOT := $(CURDIR)
 TMP := $(ROOT)/.tmp
 
-VARIANTS := circular keypad-dual keypad-single columnar-dual
+VARIANTS := circular dial-dom keypad-dual keypad-single columnar-dual
 DIST := $(addprefix dist/,$(addsuffix .html,$(VARIANTS)))
 
 TEMPLATE_vertical := variants/shared/templates/base-vertical.html
@@ -26,6 +26,12 @@ TITLE_circular := Swipe Calculator — Canvas
 BASE_circular := vertical
 HEAD_circular := variants/circular/head.html
 BODY_circular := variants/circular/body.html
+
+ENTRY_dial-dom := src/variants/dial-dom/index.js
+TITLE_dial-dom := Swipe Calculator — DOM Dial
+BASE_dial-dom := vertical
+HEAD_dial-dom := variants/dial-dom/head.html
+BODY_dial-dom := variants/dial-dom/body.html
 
 ENTRY_keypad-dual := src/variants/keypad-dual/index.js
 TITLE_keypad-dual := Dual Keypad Calculator
