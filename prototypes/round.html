@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Fast Calculator — DOM (Round Dial + Swipe)</title>
+  
+  <!-- PWA: basic installability for Android + A2HS on iOS -->
+  <meta name="theme-color" content="#06101f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Fast Calc" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  
+  <style>
+    :root {
+      --surface: #081221;
+      --card: #0f1a2c;
+      --ink: #eaf2ff;
+      --muted: rgba(234, 242, 255, 0.72);
+      --accent: #6ea8fe;
+      --accent-soft: rgba(110,168,254,0.18);
+      --border: rgba(255,255,255,0.12);
+      --warn: #f7b955;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font: 500 15px/1.35 Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; color: var(--ink); background: #06101f; }
+
+    main { width: min(960px, 100%); margin: 0 auto; background: var(--surface); border-radius: 22px; padding: clamp(12px,4vw,24px); display: grid; gap: clamp(10px,3vw,18px); }
+
+    /* Always a row: A | op | B. Squeezes on mobile with smaller clamps. */
+    .fields { display: grid; grid-template-columns: minmax(0,1fr) clamp(64px, 18vw, 96px) minmax(0,1fr); gap: clamp(8px,2.5vw,14px); align-items: stretch; }
+
+    .card { position: relative; background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: clamp(8px,2.5vw,14px); display: grid; gap: 6px; cursor: pointer; min-width: 0; }
+    .card .value { font-size: clamp(18px, 6.2vw, 36px); font-weight: 700; text-align: center; min-height: 1.1em; word-break: break-word; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    .card.is-active { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+    .card.is-locked { border-color: var(--warn); box-shadow: 0 0 0 2px rgba(247,185,85,.25); }
+    .card.is-locked::before { content: "LOCKED"; position: absolute; top: 6px; right: 8px; font-size: 10px; font-weight: 800; letter-spacing: .3px; color: var(--warn); }
+
+    .result { background: var(--card); border-radius: 18px; border: 1px solid var(--border); padding: clamp(10px,3vw,18px) clamp(12px,4vw,20px); display: grid; gap: 6px; justify-items: center; text-align: center; }
+    .result .value { font-size: clamp(26px, 9vw, 52px); font-weight: 800; word-break: break-all; }
+    .result .expression { font-size: 12px; color: var(--muted); }
+
+    /* Operation wheel */
+    .op-wheel { position: relative; width: clamp(64px,18vw,96px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle at 50% 45%, rgba(65, 93, 146, 0.4), transparent 65%), var(--card); border: 1px solid rgba(255,255,255,.08); display: grid; place-items: center; isolation: isolate; }
+    .op-wheel button { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) rotate(calc((360deg/4)*var(--pos) - 90deg)) translate(var(--radius)) rotate(calc(-1*((360deg/4)*var(--pos) - 90deg))); --radius: clamp(18px, 4.5vw, 36px); width: clamp(28px,5vw,42px); height: clamp(28px,5vw,42px); border-radius: 50%; border: 1px solid rgba(255,255,255,.16); background: rgba(21,31,52,.92); color: var(--ink); font-size: clamp(14px,2.6vw,18px); cursor: pointer; z-index: 1; }
+    .op-core { width: clamp(34px,6vw,56px); height: clamp(34px,6vw,56px); border-radius: 50%; background: linear-gradient(160deg, rgba(31,45,76,.9), rgba(11,18,33,.9)); border: 1px solid rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 700; font-size: clamp(14px,2.4vw,18px); color: var(--accent); box-shadow: inset 0 0 12px rgba(0,0,0,.45); z-index: 2; pointer-events: none; }
+
+    /* DIAL */
+    .dial-area { display: grid; gap: clamp(10px,3vw,16px); }
+    .dial { position: relative; width: min(520px, 100%); aspect-ratio: 1; margin: 0 auto; display: grid; place-items: center; background: radial-gradient(circle at 50% 45%, rgba(26, 36, 60, 0.85), rgba(9, 14, 26, 0.92)); border-radius: 50%; border: 1px solid rgba(255,255,255,.1); padding: clamp(18px,5vw,34px); isolation: isolate; touch-action: none; user-select: none; }
+    .dial::after { content: ""; position: absolute; inset: clamp(8px,2.5vw,14px); border-radius: 50%; border: 1px solid rgba(255,255,255,.08); pointer-events: none; }
+
+    .dial__pad { position: relative; width: 100%; height: 100%; }
+    .dial__pad button { background: rgba(13, 21, 37, 0.9); border: 1px solid rgba(255,255,255,.14); color: var(--ink); border-radius: 50%; font-size: clamp(18px,4.2vw,28px); width: clamp(48px,11vw,68px); height: clamp(48px,11vw,68px); display: grid; place-items: center; cursor: pointer; transition: transform .12s ease, border .12s ease, background .12s ease; }
+    .dial__pad button[data-ring-pos] { position: absolute; top: 50%; left: 50%; --count: 12; --ring-radius: clamp(112px, 30vw, 188px); transform: translate(-50%, -50%) rotate(calc((360deg/var(--count)) * var(--pos) - 90deg)) translate(var(--ring-radius)) rotate(calc(-1*((360deg/var(--count)) * var(--pos) - 90deg))); }
+    .dial__pad button.is-hot { transform: translate(-50%, -50%) rotate(calc((360deg/var(--count)) * var(--pos) - 90deg)) translate(var(--ring-radius)) rotate(calc(-1*((360deg/var(--count)) * var(--pos) - 90deg))) scale(1.06); border-color: var(--accent); }
+
+    /* Outside-of-circle controls */
+    .controls-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .pill { padding: 8px 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,.14); background: rgba(17,28,48,.92); color: var(--ink); font-weight: 700; font-size: 13px; letter-spacing: .2px; cursor: pointer; }
+
+    footer.site-foot { width: min(960px, 100%); margin: 8px auto 24px; color: var(--muted); text-align: center; font-weight: 600; letter-spacing: .2px; opacity: .9; }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="fields">
+      <button type="button" class="card" data-field="A">
+        <div class="value" data-field-value="A">0</div>
+      </button>
+
+      <div class="op-wheel" aria-label="Choose operation">
+        <button type="button" data-op="+" style="--pos:0">+</button>
+        <button type="button" data-op="×" style="--pos:1">×</button>
+        <button type="button" data-op="−" style="--pos:2">−</button>
+        <button type="button" data-op=":" style="--pos:3">:</button>
+        <div class="op-core" data-op-display>×</div>
+      </div>
+
+      <button type="button" class="card" data-field="B">
+        <div class="value" data-field-value="B">0</div>
+      </button>
+    </section>
+
+    <section class="result">
+      <div class="value" data-result>0</div>
+      <div class="expression"><span data-expr-a>A</span> <span data-expr-op>×</span> <span data-expr-b>B</span></div>
+    </section>
+
+    <section class="dial-area">
+      <div class="dial" data-dial>
+        <div class="dial__pad" data-pad>
+          <!-- ring: dot at NOON, then 1..9, 0, sign clockwise -->
+          <button type="button" data-action="dot" data-ring-pos style="--pos:0">·</button>
+          <button type="button" data-digit="1" data-ring-pos style="--pos:1">1</button>
+          <button type="button" data-digit="2" data-ring-pos style="--pos:2">2</button>
+          <button type="button" data-digit="3" data-ring-pos style="--pos:3">3</button>
+          <button type="button" data-digit="4" data-ring-pos style="--pos:4">4</button>
+          <button type="button" data-digit="5" data-ring-pos style="--pos:5">5</button>
+          <button type="button" data-digit="6" data-ring-pos style="--pos:6">6</button>
+          <button type="button" data-digit="7" data-ring-pos style="--pos:7">7</button>
+          <button type="button" data-digit="8" data-ring-pos style="--pos:8">8</button>
+          <button type="button" data-digit="9" data-ring-pos style="--pos:9">9</button>
+          <button type="button" data-digit="0" data-ring-pos style="--pos:10">0</button>
+          <button type="button" data-action="sign" data-ring-pos style="--pos:11">±</button>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <button class="pill" type="button" data-action="clear">CE</button>
+        <button class="pill" type="button" data-action="backspace" aria-label="Backspace">⌫</button>
+        <button class="pill" type="button" data-action="reset">Reset both</button>
+      </div>
+    </section>
+  </main>
+  <footer class="site-foot">Fast Calculator Round dial + swipe</footer>
+
+  <script>
+  // ===== Precision helper: true 48-mantissa-bit rounding =====
+  const pBits = (() => {
+    const dv = new DataView(new ArrayBuffer(8));
+    const MASK_52 = (1n << 52n) - 1n;
+
+    function toBigInt(x) {
+      dv.setFloat64(0, x, false); // big-endian
+      const hi = BigInt(dv.getUint32(0, false));
+      const lo = BigInt(dv.getUint32(4, false));
+      return (hi << 32n) | lo;
+    }
+    function fromBigInt(bi) {
+      const hi = Number((bi >> 32n) & 0xFFFFFFFFn);
+      const lo = Number(bi & 0xFFFFFFFFn);
+      dv.setUint32(0, hi, false);
+      dv.setUint32(4, lo, false);
+      return dv.getFloat64(0, false);
+    }
+
+    function round48(x) {
+      if (!Number.isFinite(x)) return x;
+      let bits = toBigInt(x);
+      const sign = bits >> 63n;
+      let exp = (bits >> 52n) & 0x7FFn;
+      let mant = bits & MASK_52;
+      if (exp === 0x7FFn) return x; // NaN/Inf
+      if (exp === 0n) return x;     // subnormals: leave as-is
+      // round mantissa to 48 bits (keep top 48, round half-even on the 4 discarded bits)
+      const keep = mant >> 4n;              // top 48
+      const cut = mant & 0xFn;              // lower 4
+      const half = 0x8n;                    // 1000b
+      let newMant = keep;
+      if (cut > half || (cut === half && (keep & 1n))) {
+        newMant = keep + 1n;
+        if (newMant >> 48n) {
+          newMant &= (1n << 48n) - 1n;
+          exp = exp + 1n;
+          if (exp >= 0x7FFn) return (sign ? -Infinity : Infinity);
+        }
+      }
+      mant = (newMant << 4n) & MASK_52; // place back into 52-bit field
+      bits = (sign << 63n) | (exp << 52n) | mant;
+      return fromBigInt(bits);
+    }
+
+    function fmt(x) {
+      const y = round48(x);
+      if (!Number.isFinite(y)) return '—';
+      const abs = Math.abs(y);
+      let s;
+      if (abs >= 1e12 || (abs > 0 && abs < 1e-6)) s = y.toPrecision(12);
+      else s = y.toFixed(12);
+      if (s.indexOf('e') !== -1 || s.indexOf('E') !== -1) return s;
+      if (s.indexOf('.') !== -1) {
+        while (s.endsWith('0')) s = s.slice(0, -1);
+        if (s.endsWith('.')) s = s.slice(0, -1);
+      }
+      return s;
+    }
+
+    return { round48, fmt };
+  })();
+
+  const OPS = ["+", "×", "−", ":"]; // display
+  function evalOp(op, a, b) {
+    switch (op) {
+      case "+": return pBits.round48(a + b);
+      case "×": return pBits.round48(a * b);
+      case "−": return pBits.round48(a - b);
+      case ":": return b === 0 ? NaN : pBits.round48(a / b);
+    }
+  }
+
+  // Start focus in A (not locked)
+  const state = { a:"0", b:"0", target:"A", opIndex:1, locked:null };
+  const els = {
+    fields: {
+      A: document.querySelector('[data-field="A"]'),
+      B: document.querySelector('[data-field="B"]')
+    },
+    values: {
+      A: document.querySelector('[data-field-value="A"]'),
+      B: document.querySelector('[data-field-value="B"]')
+    },
+    expr: {
+      A: document.querySelector('[data-expr-a]'),
+      B: document.querySelector('[data-expr-b]'),
+      op: document.querySelector('[data-expr-op]')
+    },
+    result: document.querySelector('[data-result]'),
+    dial: document.querySelector('[data-dial]'),
+    pad: document.querySelector('[data-pad]'),
+    opWheel: {
+      buttons: Array.from(document.querySelectorAll('[data-op]')),
+      display: document.querySelector('[data-op-display]')
+    },
+    actions: {
+      clear: document.querySelector('[data-action="clear"]'),
+      backspace: document.querySelector('[data-action="backspace"]'),
+      reset: document.querySelector('[data-action="reset"]')
+    }
+  };
+
+  function setTarget(t){ if(t==='A'||t==='B'){ state.target=t; render(); }}
+  function enforceTargetForLock(){
+    if(state.locked){
+      const other = state.locked === 'A' ? 'B' : 'A';
+      if(state.target !== other) state.target = other;
+    }
+  }
+  function toggleLock(op){
+    if(op !== 'A' && op !== 'B') return;
+    state.locked = (state.locked === op) ? null : op;
+    if(state.locked){
+      // When locking one operand, always target the other and disarm flip
+      state.target = (op === 'A') ? 'B' : 'A';
+      flipArmed = false;
+    }
+    render();
+  }
+  function currentStr(){ return state.target==='A'? state.a : state.b; }
+  function setCurrentStr(s){ if(state.target==='A') state.a=s; else state.b=s; }
+  function toNum(s){ return Number(s===''||s==='-'? '0' : s); }
+  function normZeros(s){ if (s===''||s==='-'||s==='.'||s==='-.') return s; const neg=s.startsWith('-'); let t=neg?s.slice(1):s; if(t.startsWith('0') && t!=='0' && !t.startsWith('0.')){ t=t.replace(/^0+/, ''); if(t==='') t='0'; } return neg?('-'+t):t; }
+
+  function render(){
+    enforceTargetForLock();
+    els.values.A.textContent = state.a;
+    els.values.B.textContent = state.b;
+    els.expr.A.textContent = state.a;
+    els.expr.B.textContent = state.b;
+    const op = OPS[state.opIndex];
+    els.expr.op.textContent = op;
+    els.opWheel.display.textContent = op;
+    const val = evalOp(op, toNum(state.a), toNum(state.b));
+    els.result.textContent = pBits.fmt(val);
+    els.fields.A.classList.toggle('is-active', state.target==='A');
+    els.fields.B.classList.toggle('is-active', state.target==='B');
+    els.fields.A.classList.toggle('is-locked', state.locked==='A');
+    els.fields.B.classList.toggle('is-locked', state.locked==='B');
+  }
+
+  function appendDigit(d){
+    enforceTargetForLock();
+    let s = currentStr();
+    if (s === '0') s = '';
+    setCurrentStr(normZeros(s + d));
+    render();
+  }
+  function appendDot(){ enforceTargetForLock(); const s=currentStr(); if(!s.includes('.')) setCurrentStr(s==='0' ? '0.' : s + '.'); render(); }
+  function toggleSign(){ enforceTargetForLock(); const s=currentStr(); setCurrentStr(s.startsWith('-')? s.slice(1) : ('-'+s)); render(); }
+  function backspace(){ enforceTargetForLock(); const s=currentStr(); if (s.length <= 1 || (s.length===2 && s.startsWith('-') && !s.includes('.'))) setCurrentStr('0'); else setCurrentStr(s.slice(0,-1)); flipArmed=false; render(); }
+  function clearOne(){ enforceTargetForLock(); setCurrentStr('0'); flipArmed=false; render(); }
+  function resetAll(){ state.a='0'; state.b='0'; state.target='A'; state.locked=null; flipArmed=false; render(); }
+
+  // Wheel
+  els.opWheel.buttons.forEach((btn,i)=>{
+    btn.addEventListener('click', ()=>{ state.opIndex=i; els.opWheel.buttons.forEach(b=>b.classList.toggle('is-active', b===btn)); render(); });
+  });
+
+  // Field cards now toggle LOCK instead of routing input
+  els.fields.A.addEventListener('click', ()=> toggleLock('A'));
+  els.fields.B.addEventListener('click', ()=> toggleLock('B'));
+
+  // Outside controls
+  els.actions.clear.addEventListener('click', clearOne);
+  els.actions.backspace.addEventListener('click', backspace);
+  els.actions.reset.addEventListener('click', resetAll);
+
+  // ===== Swipe model =====
+  let swiping=false, lastHot=null, flipArmed=false;
+
+  function buttonFromPoint(x,y){
+    const el = document.elementFromPoint(x,y);
+    if(!el) return null;
+    return el.closest && el.closest('[data-ring-pos]');
+  }
+  function setHot(btn){ if(lastHot===btn) return; if(lastHot) lastHot.classList.remove('is-hot'); if(btn){ btn.classList.add('is-hot'); } lastHot=btn; }
+  function handleKey(btn){ if(!btn) return; const {digit, action} = btn.dataset; if(digit) appendDigit(digit); else if(action==='dot') appendDot(); else if(action==='sign') toggleSign(); }
+
+  // Start gesture: if locked, never flip; also per-press CLEAR when locked
+  function onDialPointerDown(ev){
+    if(ev.pointerType==='mouse' && ev.button!==0) return; // primary only for mouse
+    ev.preventDefault();
+    const startBtn = buttonFromPoint(ev.clientX, ev.clientY);
+    if(startBtn){
+      if(state.locked){
+        const other = state.locked === 'A' ? 'B' : 'A';
+        if(state.target !== other){ state.target = other; }
+        // Per-press clear when locked
+        setCurrentStr('0');
+      } else if (flipArmed) {
+        // flip only when armed and no lock
+        const nextTarget = state.target === 'A' ? 'B' : 'A';
+        state.target = nextTarget;
+        setCurrentStr('0'); // initialize fresh entry on the new target
+      }
+      handleKey(startBtn);
+      setHot(startBtn);
+    } else {
+      setHot(null); // recovery start: keep current target, do not flip/clear
+    }
+    swiping = true;
+    try { ev.target.setPointerCapture(ev.pointerId); } catch {}
+    flipArmed = true; // arm flipping for subsequent presses (ignored if locked)
+  }
+  function onDialPointerMove(ev){ if(!swiping) return; const btn = buttonFromPoint(ev.clientX, ev.clientY); if(btn) { if(btn!==lastHot){ handleKey(btn); setHot(btn);} } else { setHot(null); } }
+  function onDialPointerUp(){ if(!swiping) return; swiping=false; setHot(null); }
+
+  els.dial.addEventListener('pointerdown', onDialPointerDown);
+  els.dial.addEventListener('pointermove', onDialPointerMove);
+  window.addEventListener('pointerup', onDialPointerUp);
+
+  // PWA manifest injection (Chromium installability)
+  (function injectManifest(){
+    try {
+      const manifest = {
+        name: "Fast Calculator",
+        short_name: "Fast Calc",
+        start_url: "./",
+        display: "standalone",
+        background_color: "#06101f",
+        theme_color: "#06101f",
+        icons: [
+          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "icon-512.png", sizes: "512x512", type: "image/png" }
+        ]
+      };
+      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = url;
+      document.head.appendChild(link);
+    } catch {}
+  })();
+
+  // Initial paint from a true reset state
+  resetAll();
+  els.opWheel.buttons[state.opIndex].classList.add('is-active');
+  </script>
+</body>
+</html>
