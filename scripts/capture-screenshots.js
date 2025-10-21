@@ -33,11 +33,11 @@ async function ensureBuildArtifacts() {
   }
 
   console.log(
-    `Missing build output for ${missing.map((item) => item.slug).join(', ')}. Running \`npm run build\` first...`,
+    `Missing build output for ${missing.map((item) => item.slug).join(', ')}. Running \`make\` first...`,
   );
 
   await new Promise((resolvePromise, rejectPromise) => {
-    const child = spawn('npm', ['run', 'build'], {
+    const child = spawn('make', [], {
       cwd: rootDir,
       stdio: 'inherit',
       env: process.env,
@@ -47,7 +47,7 @@ async function ensureBuildArtifacts() {
       if (code === 0) {
         resolvePromise();
       } else {
-        rejectPromise(new Error(`npm run build exited with code ${code}`));
+        rejectPromise(new Error(`make exited with code ${code}`));
       }
     });
   });
