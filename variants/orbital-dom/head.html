@@ -1,0 +1,392 @@
+  <style>
+    :root {
+      --bg: #0e1525;
+      --surface: rgba(15, 23, 40, 0.92);
+      --card: rgba(17, 26, 44, 0.95);
+      --ring: rgba(11, 18, 33, 0.94);
+      --ring-inner: rgba(9, 15, 27, 0.9);
+      --ink: #eaf2ff;
+      --muted: #94a2bb;
+      --accent: #6ea8fe;
+      --accent-soft: rgba(110, 168, 254, 0.2);
+      --accent-emerald: #34d5b1;
+      --border: rgba(255, 255, 255, 0.12);
+    }
+
+    body {
+      background: radial-gradient(1200px 820px at 50% -12%, #1a2440, var(--bg));
+      color: var(--ink);
+      padding: clamp(14px, 4vw, 30px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(10px, 2vw, 18px);
+    }
+
+    header {
+      font-weight: 700;
+      letter-spacing: 0.2px;
+      text-align: center;
+    }
+
+    main {
+      width: min(900px, 100%);
+      display: grid;
+      grid-template-rows: auto auto 1fr auto;
+      gap: clamp(16px, 3vw, 26px);
+      background: var(--surface);
+      border-radius: 28px;
+      padding: clamp(18px, 4vw, 36px);
+      box-shadow: 0 28px 68px rgba(4, 9, 24, 0.55);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .fields-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(84px, 15vw, 128px) minmax(0, 1fr);
+      gap: clamp(12px, 3vw, 24px);
+      align-items: center;
+    }
+
+    .field-card {
+      background: var(--card);
+      border-radius: 20px;
+      padding: clamp(14px, 3vw, 24px);
+      border: 1px solid var(--border);
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      cursor: pointer;
+      transition: border 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .field-card::after {
+      content: attr(data-field-label);
+      position: absolute;
+      top: 14px;
+      left: 18px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .field-card .value {
+      font-size: clamp(34px, 8vw, 56px);
+      font-weight: 600;
+      text-align: right;
+      min-height: 1.2em;
+      word-break: break-word;
+    }
+
+    .field-card .meta {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    .field-card:hover {
+      border-color: rgba(255, 255, 255, 0.26);
+      transform: translateY(-1px);
+    }
+
+    .field-card.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px var(--accent-soft);
+    }
+
+    .op-wheel {
+      position: relative;
+      width: clamp(84px, 15vw, 128px);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 45%, rgba(65, 93, 146, 0.4), transparent 65%), var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+      isolation: isolate;
+    }
+
+    .op-wheel button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: rotate(var(--angle)) translate(var(--radius)) rotate(calc(-1 * var(--angle)));
+      --radius: clamp(24px, 4.6vw, 44px);
+      width: clamp(36px, 6.2vw, 54px);
+      height: clamp(36px, 6.2vw, 54px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(21, 31, 52, 0.92);
+      color: var(--ink);
+      font-size: clamp(16px, 3vw, 20px);
+      cursor: pointer;
+      transition: border 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    }
+
+    .op-wheel button:hover {
+      border-color: var(--accent);
+      background: rgba(29, 43, 70, 0.95);
+    }
+
+    .op-wheel button.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      color: var(--accent);
+    }
+
+    .op-wheel .op-core {
+      width: clamp(44px, 7vw, 72px);
+      height: clamp(44px, 7vw, 72px);
+      border-radius: 50%;
+      background: linear-gradient(160deg, rgba(31, 45, 76, 0.9), rgba(11, 18, 33, 0.9));
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      display: grid;
+      place-items: center;
+      font-weight: 600;
+      font-size: clamp(18px, 3.2vw, 24px);
+      color: var(--accent);
+      box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.45);
+    }
+
+    .result-card {
+      background: var(--card);
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: clamp(16px, 3vw, 28px) clamp(18px, 4vw, 36px);
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .result-card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.22px;
+      color: var(--muted);
+    }
+
+    .result-card .value {
+      font-size: clamp(42px, 10vw, 70px);
+      font-weight: 700;
+      word-break: break-all;
+    }
+
+    .result-card .expression {
+      display: flex;
+      gap: 14px;
+      font-size: 14px;
+      color: rgba(234, 242, 255, 0.72);
+    }
+
+    .result-card .expression span {
+      padding: 6px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(17, 28, 48, 0.82);
+      transition: border 0.18s ease, background 0.18s ease, color 0.18s ease;
+    }
+
+    .result-card .expression span.is-active {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(110, 168, 254, 0.12);
+    }
+
+    .dial-shell {
+      display: grid;
+      justify-items: center;
+      gap: 20px;
+    }
+
+    .dial {
+      position: relative;
+      width: min(520px, 100%);
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 38%, rgba(61, 104, 178, 0.18), transparent 65%), var(--ring);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 40px 80px rgba(0, 0, 0, 0.4), inset 0 -18px 24px rgba(0, 0, 0, 0.35);
+      overflow: visible;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .dial::after {
+      content: '';
+      position: absolute;
+      inset: 18%;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 40%, rgba(80, 129, 204, 0.12), transparent 70%), var(--ring-inner);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      box-shadow: inset 0 16px 28px rgba(0, 0, 0, 0.35);
+    }
+
+    .dial.is-swiping::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(110, 168, 254, 0.25);
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .dial-active-chip {
+      position: absolute;
+      top: 18px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(17, 31, 56, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      color: var(--muted);
+      z-index: 2;
+    }
+
+    .dial [data-dial-key] {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      --radius: 38%;
+      transform: rotate(var(--angle)) translate(var(--radius)) rotate(calc(-1 * var(--angle)));
+      width: clamp(58px, 11vw, 80px);
+      height: clamp(58px, 11vw, 80px);
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(17, 28, 48, 0.9);
+      color: var(--ink);
+      font-size: clamp(24px, 5vw, 34px);
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.18s ease, border 0.18s ease, background 0.18s ease;
+      z-index: 3;
+    }
+
+    .dial [data-dial-key]:hover,
+    .dial [data-dial-key].is-hot {
+      border-color: var(--accent);
+      background: rgba(31, 46, 78, 0.95);
+      color: var(--accent);
+    }
+
+    .dial [data-dial-key].is-hot {
+      transform: rotate(var(--angle)) translate(var(--radius)) rotate(calc(-1 * var(--angle))) scale(1.06);
+    }
+
+    .dial [data-dial-key][data-action="sign"] {
+      font-size: clamp(28px, 5.4vw, 36px);
+    }
+
+    .dial [data-center]
+    {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: clamp(160px, 32vw, 220px);
+      height: clamp(160px, 32vw, 220px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: linear-gradient(160deg, rgba(25, 38, 66, 0.92), rgba(12, 19, 34, 0.88));
+      box-shadow: inset 0 20px 40px rgba(0, 0, 0, 0.32);
+      display: grid;
+      place-items: center;
+      z-index: 1;
+    }
+
+    .dial [data-center] button {
+      width: 72%;
+      padding: 18px 0;
+      border-radius: 22px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(13, 23, 41, 0.9);
+      color: var(--muted);
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border 0.2s ease, transform 0.2s ease, color 0.2s ease;
+    }
+
+    .dial [data-center] button:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-1px);
+    }
+
+    .dial [data-center] button span {
+      display: block;
+      font-size: 11px;
+      text-transform: none;
+      color: rgba(234, 242, 255, 0.55);
+      margin-top: 6px;
+      letter-spacing: 0;
+    }
+
+    .bottom-actions {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .bottom-actions button {
+      padding: 12px 18px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(17, 28, 48, 0.92);
+      color: var(--ink);
+      font-weight: 600;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      cursor: pointer;
+      transition: border 0.18s ease, transform 0.18s ease, background 0.18s ease;
+    }
+
+    .bottom-actions button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+      background: rgba(24, 37, 62, 0.95);
+    }
+
+    .hint {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 720px;
+    }
+
+    @media (max-width: 720px) {
+      main {
+        padding: clamp(18px, 4vw, 28px);
+      }
+
+      .fields-row {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+
+      .op-wheel {
+        order: -1;
+      }
+
+      .field-card {
+        width: min(320px, 100%);
+      }
+
+      .result-card {
+        padding: clamp(16px, 5vw, 24px);
+      }
+    }
+  </style>

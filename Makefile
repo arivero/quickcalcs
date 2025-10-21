@@ -6,7 +6,7 @@ ESBUILD ?= $(shell if command -v esbuild >/dev/null 2>&1; then command -v esbuil
 ROOT := $(CURDIR)
 TMP := $(ROOT)/.tmp
 
-VARIANTS := circular keypad-dual keypad-single columnar-dual
+VARIANTS := circular keypad-dual keypad-single columnar-dual orbital-dom
 DIST := $(addprefix dist/,$(addsuffix .html,$(VARIANTS)))
 
 TEMPLATE_vertical := variants/shared/templates/base-vertical.html
@@ -44,6 +44,12 @@ TITLE_columnar-dual := Columnar Dual Calculator
 BASE_columnar-dual := vertical
 HEAD_columnar-dual := variants/columnar-dual/head.html
 BODY_columnar-dual := variants/columnar-dual/body.html
+
+ENTRY_orbital-dom := src/variants/orbital-dom/index.js
+TITLE_orbital-dom := Swipe Calculator — DOM
+BASE_orbital-dom := vertical
+HEAD_orbital-dom := variants/orbital-dom/head.html
+BODY_orbital-dom := variants/orbital-dom/body.html
 
 .PHONY: all clean
 

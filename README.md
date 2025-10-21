@@ -46,6 +46,7 @@ The compiled calculators land in `dist/`:
 * `dist/keypad-dual.html` – Dual keypad calculator with side-by-side pads dedicated to each operand (landscape template).
 * `dist/keypad-single.html` – Classic keypad with a toggle to route digits to the left or right operand.
 * `dist/columnar-dual.html` – Vertical column calculator with stacked digits per operand.
+* `dist/orbital-dom.html` – Swipe calculator with a circular DOM dial and radial operation wheel (no canvas required).
 
 and must be moved to docs to release it public
 

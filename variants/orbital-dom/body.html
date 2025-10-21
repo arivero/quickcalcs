@@ -1,0 +1,58 @@
+  <header>Swipe Calculator — <span style="color: var(--accent);">DOM</span></header>
+  <main>
+    <section class="fields-row">
+      <button type="button" class="field-card" data-field="A" data-field-label="Operand A">
+        <div class="value" data-field-value="A">0</div>
+        <div class="meta">Tap to route swipes to A</div>
+      </button>
+      <div class="op-wheel">
+        <button type="button" data-op="+" style="--angle: -90deg;">+</button>
+        <button type="button" data-op="×" style="--angle: 0deg;">×</button>
+        <button type="button" data-op="−" style="--angle: 90deg;">−</button>
+        <button type="button" data-op=":" style="--angle: 180deg;">:</button>
+        <div class="op-core" data-operation-value>×</div>
+      </div>
+      <button type="button" class="field-card" data-field="B" data-field-label="Operand B">
+        <div class="value" data-field-value="B">0</div>
+        <div class="meta">Tap to route swipes to B</div>
+      </button>
+    </section>
+
+    <section class="result-card">
+      <div class="label">Result</div>
+      <div class="value" data-result-value>0</div>
+      <div class="expression">
+        <span data-expression="A">A</span>
+        <span data-expression-op>×</span>
+        <span data-expression="B">B</span>
+      </div>
+    </section>
+
+    <section class="dial-shell">
+      <div class="dial" data-dial>
+        <div class="dial-active-chip" data-active-chip>Typing → A</div>
+        <button type="button" data-dial-key data-action="dot" style="--angle: -90deg;">.</button>
+        <button type="button" data-dial-key data-digit="1" style="--angle: -60deg;">1</button>
+        <button type="button" data-dial-key data-digit="2" style="--angle: -30deg;">2</button>
+        <button type="button" data-dial-key data-digit="3" style="--angle: 0deg;">3</button>
+        <button type="button" data-dial-key data-digit="4" style="--angle: 30deg;">4</button>
+        <button type="button" data-dial-key data-digit="5" style="--angle: 60deg;">5</button>
+        <button type="button" data-dial-key data-digit="6" style="--angle: 90deg;">6</button>
+        <button type="button" data-dial-key data-digit="7" style="--angle: 120deg;">7</button>
+        <button type="button" data-dial-key data-digit="8" style="--angle: 150deg;">8</button>
+        <button type="button" data-dial-key data-digit="9" style="--angle: 180deg;">9</button>
+        <button type="button" data-dial-key data-digit="0" style="--angle: 210deg;">0</button>
+        <button type="button" data-dial-key data-action="sign" style="--angle: 240deg;">±</button>
+        <div data-center>
+          <button type="button" data-action="reset-all">Clear Both<span>Center reset</span></button>
+        </div>
+      </div>
+    </section>
+
+    <section class="bottom-actions">
+      <button type="button" data-action="clear-active">Clear</button>
+      <button type="button" data-action="backspace">Backspace</button>
+      <button type="button" data-action="swap-operands">Swap A↔B</button>
+    </section>
+  </main>
+  <p class="hint">Glide around the ring to type. Release to flip to the other operand. Dot sits at 12 o'clock, ± at 8 o'clock. Tap fields to choose where digits go. Center clears both. No equals key needed.</p>
