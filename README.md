@@ -62,7 +62,7 @@ node scripts/capture-screenshots.js
 ## Shared template development tips
 
 * Place markup reused across calculators in `variants/shared/fragments/`. Reference fragments using `{{> ...}}`. Fragment includes resolve recursively so fragments can reference other fragments.
-* To add a new calculator, create `variants/<name>/head.html` and `variants/<name>/body.html`, implement its logic in `src/variants/<name>/index.js`, then register the variant in `scripts/build.js` with the appropriate base template (`vertical` or `landscape`).
+* To add a new calculator, create `variants/<name>/head.html` and `variants/<name>/body.html`, implement its logic in `src/variants/<name>/index.js`, then register the variant in `scripts/build.sh` and the `Makefile` with the appropriate base template (`vertical` or `landscape`).
 * Keep `variants/shared/templates` limited to structural scaffolds. Most layout-specific tweaks belong either in fragments or the variant head file so they remain shareable.
 
 ## Optional test harness
