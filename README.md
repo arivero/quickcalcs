@@ -23,18 +23,17 @@ Every variant chooses a base template (`vertical` or `landscape`). The build scr
 
 ## Building the calculators
 
-1. Install dependencies:
+Builds now use Make + the esbuild CLI (no npm required for bundling).
+
+1. Ensure `esbuild` is available on your PATH (or set `ESBUILD=/path/to/esbuild`).
+2. Produce the standalone HTML files with:
    ```bash
-   npm install
+   make
    ```
-2. (First run only) install a browser for Playwright screenshots:
-   ```bash
-   npx playwright install chromium
-   ```
-3. Produce the standalone HTML files:
-   ```bash
-   npm run build
-   ```
+   - Include the optional test harness in the output by adding:
+     ```bash
+     WITH_TESTS=1 make
+     ```
 
 The compiled calculators land in `dist/`:
 
@@ -49,13 +48,16 @@ Each file is self-contained and ready for offline distribution.
 
 ## Refreshing screenshots
 
-Capture updated images for the README with:
+The Playwright-based capture helper remains a Node tool. If you need screenshots, install Playwright and run the capture script manually after building with Make:
 
 ```bash
-npm run capture
-```
+# one-time
+npx playwright install chromium
 
-The script ensures the production HTML exists (running `npm run build` automatically when needed), then opens each calculator from `dist/` via Playwright Chromium and writes PNGs to `docs/images/`. The PNGs are git-ignored because the repository cannot accept binary assets, so regenerate them locally whenever you need updated screenshots. Share them by uploading the generated files to your preferred hosting service.
+# build HTML then capture
+make
+node scripts/capture-screenshots.js
+```
 
 ## Shared template development tips
 
@@ -65,17 +67,17 @@ The script ensures the production HTML exists (running `npm run build` automatic
 
 ## Optional test harness
 
-The circular calculator ships with a developer-only assertion harness. To include it in the built HTML, append `-- --with-tests` when running the build:
+The circular calculator ships with a developer-only assertion harness. To include it in the built HTML with Make, set `WITH_TESTS=1`:
 
 ```bash
-npm run build -- --with-tests
+WITH_TESTS=1 make
 ```
 
 Open the generated HTML with `#test` in the URL hash to execute the assertions in the developer console.
 
 ## Screenshot gallery
 
-Screenshots are generated artifacts and therefore not version-controlled. After running `npm run capture` you can open the following files locally:
+Screenshots are generated artifacts and therefore not version-controlled. After running the capture helper you can open the following files locally:
 
 * `docs/images/circular.png`
 * `docs/images/keypad-dual.png`
@@ -83,4 +85,3 @@ Screenshots are generated artifacts and therefore not version-controlled. After 
 * `docs/images/columnar-dual.png`
 
 If you need to embed the gallery in documentation, upload the generated PNGs to an image host that accepts temporary assets and reference those URLs instead of the git-ignored paths.
-
