@@ -146,6 +146,10 @@ export function mountDualOperandCalculator(options = {}) {
         case 'backspace':
           backspace(target);
           break;
+        case 'clear':
+          setOperand(target, '');
+          pendingClear[target] = false;
+          break;
         default:
           break;
       }
