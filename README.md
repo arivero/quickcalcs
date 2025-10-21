@@ -43,6 +43,7 @@ Builds now use Make + the esbuild CLI (no npm required for bundling).
 The compiled calculators land in `dist/`:
 
 * `dist/circular.html` – Swipe-driven circular dial calculator rendered on canvas.
+* `dist/dial-dom.html` – Canvas-inspired radial dial built entirely with DOM elements.
 * `dist/keypad-dual.html` – Dual keypad calculator with side-by-side pads dedicated to each operand (landscape template).
 * `dist/keypad-single.html` – Classic keypad with a toggle to route digits to the left or right operand.
 * `dist/columnar-dual.html` – Vertical column calculator with stacked digits per operand.

@@ -1,0 +1,58 @@
+  <header>Swipe Calculator — <span style="color:#6ea8fe">DOM Dial</span></header>
+  <main>
+    <section class="fields">
+      <button class="operand-card" type="button" data-field="A">
+        <span class="label">Operand A</span>
+        <span class="value" data-field-value="A">0</span>
+      </button>
+      <div class="op-wheel" aria-label="Choose operation">
+        <div class="op-wheel__ring">
+          <button type="button" data-op="+" style="--pos:0">+</button>
+          <button type="button" data-op="×" style="--pos:1">×</button>
+          <button type="button" data-op="−" style="--pos:2">−</button>
+          <button type="button" data-op=":" style="--pos:3">:</button>
+        </div>
+        <div class="op-wheel__value" data-operation-value>×</div>
+      </div>
+      <button class="operand-card" type="button" data-field="B">
+        <span class="label">Operand B</span>
+        <span class="value" data-field-value="B">0</span>
+      </button>
+    </section>
+    <section class="result-card">
+      <span class="label">Result</span>
+      <span class="value" data-result-value>0</span>
+    </section>
+    <section class="dial-area">
+      <div class="dial" data-dial>
+        <div class="dial__pad" data-pad>
+          <button type="button" data-action="dot" data-ring-pos style="--pos:0">·</button>
+          <button type="button" data-digit="1" data-ring-pos style="--pos:1">1</button>
+          <button type="button" data-digit="2" data-ring-pos style="--pos:2">2</button>
+          <button type="button" data-digit="3" data-ring-pos style="--pos:3">3</button>
+          <button type="button" data-digit="4" data-ring-pos style="--pos:4">4</button>
+          <button type="button" data-digit="5" data-ring-pos style="--pos:5">5</button>
+          <button type="button" data-digit="6" data-ring-pos style="--pos:6">6</button>
+          <button type="button" data-digit="7" data-ring-pos style="--pos:7">7</button>
+          <button type="button" data-digit="8" data-ring-pos style="--pos:8">8</button>
+          <button type="button" data-digit="9" data-ring-pos style="--pos:9">9</button>
+          <button type="button" data-digit="0" data-ring-pos style="--pos:10">0</button>
+          <button type="button" data-action="sign" data-ring-pos style="--pos:11">±</button>
+          <div class="dial__controls">
+            <button type="button" data-action="clear">CE</button>
+            <button type="button" data-action="backspace" aria-label="Backspace">⌫</button>
+          </div>
+        </div>
+        <button class="dial__focus" type="button" data-toggle-target>
+          <span class="label">Active operand</span>
+          <span class="value" data-target-display>A</span>
+          <span class="hint">Tap to switch</span>
+        </button>
+      </div>
+    </section>
+    <section class="actions">
+      <button type="button" data-action="clear-all">Reset both operands</button>
+      <button type="button" data-action="swap-operands">Swap A ↔ B</button>
+    </section>
+  </main>
+  <p class="hint">Tap a field or the dial center to choose which operand receives digits. The ring mirrors the canvas layout: the dot lives at the top, numbers run clockwise, and ± sits at ten o'clock. Use CE for a quick clear of the focused operand.</p>

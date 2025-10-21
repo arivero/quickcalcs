@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <title>Swipe Calculator — DOM Dial</title>
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+  </style>
+  <style>
+    :root {
+      --bg: #0f1525;
+      --surface: rgba(14, 22, 38, 0.88);
+      --card: rgba(17, 27, 46, 0.96);
+      --ink: #eaf2ff;
+      --muted: #8d9bb4;
+      --accent: #6ea8fe;
+      --accent-soft: rgba(110, 168, 254, 0.18);
+      --emerald: #3dd9b6;
+      --border: rgba(255, 255, 255, 0.14);
+    }
+    body {
+      background: radial-gradient(1200px 800px at 50% -12%, #1a2340, var(--bg));
+      color: var(--ink);
+      padding: clamp(16px, 4vw, 32px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(12px, 3vw, 22px);
+      align-items: center;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial;
+    }
+    header {
+      width: min(920px, 100%);
+      font-weight: 700;
+      font-size: clamp(20px, 4vw, 28px);
+      letter-spacing: 0.2px;
+      padding: 4px 4px 0;
+    }
+    main {
+      width: min(920px, 100%);
+      background: var(--surface);
+      border-radius: clamp(22px, 4vw, 34px);
+      padding: clamp(18px, 4vw, 32px);
+      box-shadow: 0 34px 68px rgba(7, 11, 24, 0.55);
+      display: grid;
+      gap: clamp(16px, 4vw, 28px);
+    }
+    .fields {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) clamp(120px, 20vw, 180px) minmax(0, 1fr);
+      gap: clamp(14px, 3vw, 26px);
+      align-items: center;
+    }
+    .operand-card {
+      background: var(--card);
+      border-radius: clamp(18px, 3vw, 24px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: clamp(16px, 3vw, 24px);
+      display: grid;
+      gap: clamp(10px, 2vw, 16px);
+      cursor: pointer;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+      position: relative;
+      isolation: isolate;
+    }
+    .operand-card::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: inherit;
+      border: 1.5px solid transparent;
+      pointer-events: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .operand-card:hover::after {
+      border-color: rgba(255, 255, 255, 0.22);
+    }
+    .operand-card.is-active::after {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 6px var(--accent-soft);
+    }
+    .operand-card .label {
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      color: var(--muted);
+    }
+    .operand-card .value {
+      font-size: clamp(34px, 6vw, 56px);
+      font-weight: 600;
+      text-align: right;
+      min-height: 1.2em;
+      word-break: break-word;
+    }
+    .op-wheel {
+      position: relative;
+      width: clamp(118px, 20vw, 170px);
+      aspect-ratio: 1;
+      display: grid;
+      place-items: center;
+    }
+    .op-wheel__ring {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      background: rgba(12, 19, 32, 0.78);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: inset 0 18px 38px rgba(6, 8, 18, 0.6);
+    }
+    .op-wheel__ring button {
+      --radius: clamp(40px, 9vw, 58px);
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: clamp(46px, 9vw, 60px);
+      height: clamp(46px, 9vw, 60px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(16, 26, 44, 0.92);
+      color: var(--ink);
+      font-size: clamp(20px, 4vw, 26px);
+      font-weight: 600;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.18s ease, border 0.18s ease, background 0.18s ease;
+      transform: rotate(calc((360deg / 4) * var(--pos))) translate(var(--radius)) rotate(calc((-1) * (360deg / 4) * var(--pos)));
+    }
+    .op-wheel__ring button:hover {
+      border-color: rgba(255, 255, 255, 0.32);
+    }
+    .op-wheel__ring button.is-active {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+      box-shadow: 0 0 0 4px rgba(110, 168, 254, 0.16);
+    }
+    .op-wheel__value {
+      position: absolute;
+      inset: clamp(36px, 8vw, 46px);
+      border-radius: 50%;
+      background: linear-gradient(160deg, rgba(24, 32, 54, 0.85), rgba(12, 17, 30, 0.92));
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: grid;
+      place-items: center;
+      font-size: clamp(28px, 5vw, 36px);
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.8px;
+    }
+    .result-card {
+      background: var(--card);
+      border-radius: clamp(20px, 3vw, 26px);
+      padding: clamp(18px, 4vw, 28px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: grid;
+      gap: clamp(8px, 2vw, 14px);
+      text-align: center;
+    }
+    .result-card .label {
+      text-transform: uppercase;
+      font-size: 12px;
+      letter-spacing: 0.28px;
+      color: var(--muted);
+    }
+    .result-card .value {
+      font-size: clamp(40px, 8vw, 70px);
+      font-weight: 700;
+      word-break: break-word;
+    }
+    .dial-area {
+      display: grid;
+      gap: clamp(12px, 3vw, 20px);
+    }
+    .dial {
+      position: relative;
+      width: min(560px, 100%);
+      aspect-ratio: 1;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 50% 45%, rgba(26, 36, 60, 0.85), rgba(9, 14, 26, 0.92));
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: inset 0 24px 36px rgba(0, 0, 0, 0.32), 0 26px 60px rgba(5, 9, 20, 0.55);
+      padding: clamp(24px, 5vw, 42px);
+      isolation: isolate;
+    }
+    .dial::after {
+      content: "";
+      position: absolute;
+      inset: clamp(10px, 2.5vw, 18px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      pointer-events: none;
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .dial[data-target="A"]::after {
+      box-shadow: 0 0 0 clamp(6px, 1.6vw, 10px) rgba(110, 168, 254, 0.16);
+    }
+    .dial[data-target="B"]::after {
+      box-shadow: 0 0 0 clamp(6px, 1.6vw, 10px) rgba(61, 217, 182, 0.16);
+    }
+    .dial__pad {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .dial__pad button {
+      background: rgba(13, 21, 37, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--ink);
+      border-radius: clamp(16px, 3vw, 22px);
+      font-size: clamp(20px, 4vw, 32px);
+      width: clamp(58px, 12vw, 76px);
+      height: clamp(58px, 12vw, 76px);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.18s ease, border 0.18s ease, background 0.18s ease;
+    }
+    .dial__pad button[data-ring-pos] {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      --count: 12;
+      --ring-radius: clamp(132px, 32vw, 208px);
+      transform: translate(-50%, -50%) rotate(calc((360deg / var(--count)) * var(--pos))) translate(var(--ring-radius)) rotate(calc((-1) * (360deg / var(--count)) * var(--pos)));
+    }
+    .dial__pad button:hover {
+      border-color: rgba(255, 255, 255, 0.28);
+      background: rgba(18, 28, 46, 0.98);
+    }
+    .dial__pad button[data-ring-pos]:active {
+      transform: scale(0.96) translate(-50%, -50%) rotate(calc((360deg / var(--count)) * var(--pos))) translate(var(--ring-radius)) rotate(calc((-1) * (360deg / var(--count)) * var(--pos)));
+    }
+    .dial__pad button[data-ring-pos][data-action="sign"] {
+      font-size: clamp(22px, 4.5vw, 30px);
+      color: var(--emerald);
+    }
+    .dial__pad button[data-ring-pos][data-action="dot"] {
+      font-size: clamp(28px, 5vw, 34px);
+    }
+    .dial__controls {
+      position: absolute;
+      bottom: clamp(24px, 6vw, 40px);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: clamp(10px, 2.2vw, 18px);
+    }
+    .dial__controls button {
+      width: clamp(82px, 16vw, 110px);
+      height: clamp(42px, 9vw, 56px);
+      font-size: clamp(16px, 3.6vw, 20px);
+      border-radius: clamp(16px, 3vw, 20px);
+      background: rgba(15, 24, 40, 0.9);
+    }
+    .dial__controls button[data-action="backspace"] {
+      font-size: clamp(18px, 3.6vw, 22px);
+    }
+    .dial__focus {
+      position: absolute;
+      inset: clamp(62px, 13vw, 100px);
+      border-radius: 24px;
+      background: rgba(9, 14, 26, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      place-items: center;
+      text-align: center;
+      gap: 6px;
+      padding: clamp(14px, 3vw, 20px);
+      cursor: pointer;
+      transition: border 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .dial__focus:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      transform: translateY(-1px);
+    }
+    .dial__focus .label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.28px;
+      color: var(--muted);
+    }
+    .dial__focus .value {
+      font-size: clamp(22px, 4.5vw, 30px);
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .dial__focus .hint {
+      font-size: 12px;
+      letter-spacing: 0.2px;
+      color: rgba(234, 242, 255, 0.72);
+    }
+    .dial[data-target="B"] .dial__focus .value {
+      color: var(--emerald);
+    }
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: clamp(10px, 3vw, 18px);
+    }
+    .actions button {
+      flex: 1 1 220px;
+      padding: clamp(14px, 3.4vw, 18px);
+      border-radius: clamp(16px, 3vw, 20px);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(13, 21, 35, 0.9);
+      color: var(--ink);
+      font-size: clamp(14px, 3vw, 16px);
+      font-weight: 600;
+      letter-spacing: 0.25px;
+      cursor: pointer;
+      transition: border 0.18s ease, transform 0.18s ease;
+    }
+    .actions button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      line-height: 1.6;
+      max-width: min(720px, 100%);
+    }
+    @media (max-width: 720px) {
+      .fields {
+        grid-template-columns: minmax(0, 1fr);
+      }
+      .op-wheel {
+        order: -1;
+        justify-self: center;
+      }
+    }
+    @media (max-width: 520px) {
+      main {
+        padding: clamp(16px, 6vw, 22px);
+        border-radius: clamp(20px, 6vw, 26px);
+      }
+      .dial {
+        padding: clamp(18px, 6vw, 28px);
+      }
+    }
+  </style>
+
+</head>
+<body class="layout-vertical">
+  <header>Swipe Calculator — <span style="color:#6ea8fe">DOM Dial</span></header>
+  <main>
+    <section class="fields">
+      <button class="operand-card" type="button" data-field="A">
+        <span class="label">Operand A</span>
+        <span class="value" data-field-value="A">0</span>
+      </button>
+      <div class="op-wheel" aria-label="Choose operation">
+        <div class="op-wheel__ring">
+          <button type="button" data-op="+" style="--pos:0">+</button>
+          <button type="button" data-op="×" style="--pos:1">×</button>
+          <button type="button" data-op="−" style="--pos:2">−</button>
+          <button type="button" data-op=":" style="--pos:3">:</button>
+        </div>
+        <div class="op-wheel__value" data-operation-value>×</div>
+      </div>
+      <button class="operand-card" type="button" data-field="B">
+        <span class="label">Operand B</span>
+        <span class="value" data-field-value="B">0</span>
+      </button>
+    </section>
+    <section class="result-card">
+      <span class="label">Result</span>
+      <span class="value" data-result-value>0</span>
+    </section>
+    <section class="dial-area">
+      <div class="dial" data-dial>
+        <div class="dial__pad" data-pad>
+          <button type="button" data-action="dot" data-ring-pos style="--pos:0">·</button>
+          <button type="button" data-digit="1" data-ring-pos style="--pos:1">1</button>
+          <button type="button" data-digit="2" data-ring-pos style="--pos:2">2</button>
+          <button type="button" data-digit="3" data-ring-pos style="--pos:3">3</button>
+          <button type="button" data-digit="4" data-ring-pos style="--pos:4">4</button>
+          <button type="button" data-digit="5" data-ring-pos style="--pos:5">5</button>
+          <button type="button" data-digit="6" data-ring-pos style="--pos:6">6</button>
+          <button type="button" data-digit="7" data-ring-pos style="--pos:7">7</button>
+          <button type="button" data-digit="8" data-ring-pos style="--pos:8">8</button>
+          <button type="button" data-digit="9" data-ring-pos style="--pos:9">9</button>
+          <button type="button" data-digit="0" data-ring-pos style="--pos:10">0</button>
+          <button type="button" data-action="sign" data-ring-pos style="--pos:11">±</button>
+          <div class="dial__controls">
+            <button type="button" data-action="clear">CE</button>
+            <button type="button" data-action="backspace" aria-label="Backspace">⌫</button>
+          </div>
+        </div>
+        <button class="dial__focus" type="button" data-toggle-target>
+          <span class="label">Active operand</span>
+          <span class="value" data-target-display>A</span>
+          <span class="hint">Tap to switch</span>
+        </button>
+      </div>
+    </section>
+    <section class="actions">
+      <button type="button" data-action="clear-all">Reset both operands</button>
+      <button type="button" data-action="swap-operands">Swap A ↔ B</button>
+    </section>
+  </main>
+  <p class="hint">Tap a field or the dial center to choose which operand receives digits. The ring mirrors the canvas layout: the dot lives at the top, numbers run clockwise, and ± sits at ten o'clock. Use CE for a quick clear of the focused operand.</p>
+
+  <script type="module">
+  // src/variants/shared/precision.js
+var buffer = new ArrayBuffer(8);
+var view = new DataView(buffer);
+var LOW_MASK = 4294967280;
+function normalizeDecimalString(str) {
+  if (!str.includes(".")) return str;
+  let next = str.replace(/(\.\d*?)0+$/, "$1");
+  if (next.endsWith(".")) next = next.slice(0, -1);
+  return next;
+}
+function truncateTo48Bits(value) {
+  if (!Number.isFinite(value)) return value;
+  view.setFloat64(0, value);
+  const hi = view.getUint32(0);
+  const lo = view.getUint32(4) & LOW_MASK;
+  view.setUint32(0, hi);
+  view.setUint32(4, lo);
+  return view.getFloat64(0);
+}
+function formatTruncated(value) {
+  if (!Number.isFinite(value)) {
+    if (Number.isNaN(value)) return "\u2014";
+    return value >= 0 ? "\u221E" : "\u2212\u221E";
+  }
+  const truncated = truncateTo48Bits(value);
+  const normalized = Number.parseFloat(truncated.toPrecision(14));
+  const text = normalized.toString();
+  return normalizeDecimalString(text);
+}
+function evaluateBinaryOperation(op, A, B) {
+  if (!Number.isFinite(A) || !Number.isFinite(B)) {
+    return { value: NaN, text: "\u2014" };
+  }
+  let result;
+  switch (op) {
+    case "+":
+      result = A + B;
+      break;
+    case "\u2212":
+      result = A - B;
+      break;
+    case "\xD7":
+      result = A * B;
+      break;
+    case ":":
+      if (B === 0) {
+        return { value: Infinity, text: "\u221E" };
+      }
+      result = A / B;
+      break;
+    default:
+      return { value: NaN, text: "\u2014" };
+  }
+  if (!Number.isFinite(result)) {
+    if (Number.isNaN(result)) return { value: NaN, text: "\u2014" };
+    return { value: result, text: result >= 0 ? "\u221E" : "\u2212\u221E" };
+  }
+  const truncated = truncateTo48Bits(result);
+  return { value: truncated, text: formatTruncated(truncated) };
+}
+
+// src/variants/shared/mountDualOperandCalculator.js
+function mountDualOperandCalculator(options = {}) {
+  var _a3, _b, _c, _d, _e;
+  const {
+    operations = ["+", "\u2212", "\xD7", ":"],
+    selectors = {
+      fieldValueA: '[data-field-value="A"]',
+      fieldValueB: '[data-field-value="B"]',
+      operationValue: "[data-operation-value]",
+      fieldA: '[data-field="A"]',
+      fieldB: '[data-field="B"]',
+      resultValue: "[data-result-value]",
+      operationButtons: "[data-op]",
+      clearButton: '[data-action="clear-all"]',
+      swapButton: '[data-action="swap-operands"]',
+      padRoot: "[data-pad]"
+    },
+    resolvePadTarget
+  } = options;
+  const fieldValues = {
+    A: document.querySelector(selectors.fieldValueA),
+    B: document.querySelector(selectors.fieldValueB)
+  };
+  const expressionPieces = {
+    A: (_b = (_a3 = fieldValues.A) == null ? void 0 : _a3.closest('[data-expression="A"]')) != null ? _b : null,
+    B: (_d = (_c = fieldValues.B) == null ? void 0 : _c.closest('[data-expression="B"]')) != null ? _d : null
+  };
+  const operationValue = selectors.operationValue ? document.querySelector(selectors.operationValue) : null;
+  const fieldCards2 = {
+    A: document.querySelector(selectors.fieldA),
+    B: document.querySelector(selectors.fieldB)
+  };
+  const resultValue = document.querySelector(selectors.resultValue);
+  const opButtons = Array.from(document.querySelectorAll(selectors.operationButtons));
+  const clearBtn = document.querySelector(selectors.clearButton);
+  const swapBtn = document.querySelector(selectors.swapButton);
+  if (!fieldValues.A || !fieldValues.B || !resultValue) {
+    console.warn("Dual operand calculator could not mount: missing elements.");
+    return;
+  }
+  let aStr = "";
+  let bStr = "";
+  let op = (_e = operations[2]) != null ? _e : "\xD7";
+  let lastActive = "A";
+  const pendingClear = { A: false, B: false };
+  const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive }) : ({ pad }) => pad.getAttribute("data-pad");
+  function displayValue(s) {
+    if (s === "") return "0";
+    return s;
+  }
+  function normalizeZeros(s) {
+    const neg = s.startsWith("-");
+    let t = neg ? s.slice(1) : s;
+    if (t.startsWith("0") && !t.startsWith("0.")) {
+      t = t.replace(/^0+(?=\d)/, "");
+      if (t === "") t = "0";
+    }
+    return neg ? "-" + t : t;
+  }
+  function getOperand(which) {
+    return which === "A" ? aStr : bStr;
+  }
+  function setOperand(which, value) {
+    if (which === "A") aStr = value;
+    else bStr = value;
+  }
+  function appendDigit(which, digit) {
+    let s = getOperand(which);
+    if (s === "-") s = "-0";
+    if (s === "") s = "0";
+    s += digit;
+    setOperand(which, normalizeZeros(s));
+  }
+  function appendDot(which) {
+    let s = getOperand(which);
+    if (s === "" || s === "-") s += "0";
+    if (!s.includes(".")) s += ".";
+    setOperand(which, s);
+  }
+  function toggleSign(which) {
+    let s = getOperand(which);
+    if (s.startsWith("-")) s = s.slice(1);
+    else s = "-" + (s || "");
+    setOperand(which, s);
+  }
+  function backspace(which) {
+    let s = getOperand(which);
+    if (s.length === 0) return;
+    s = s.slice(0, -1);
+    setOperand(which, s);
+  }
+  function refresh() {
+    var _a4, _b2, _c2, _d2;
+    const { text: resultText } = evaluateBinaryOperation(op, Number(aStr), Number(bStr));
+    fieldValues.A.textContent = displayValue(aStr);
+    fieldValues.B.textContent = displayValue(bStr);
+    resultValue.textContent = resultText;
+    if (operationValue) {
+      operationValue.textContent = op;
+    }
+    opButtons.forEach((btn) => {
+      btn.classList.toggle("is-active", btn.dataset.op === op);
+    });
+    (_a4 = fieldCards2.A) == null ? void 0 : _a4.classList.toggle("is-active", lastActive === "A");
+    (_b2 = fieldCards2.B) == null ? void 0 : _b2.classList.toggle("is-active", lastActive === "B");
+    (_c2 = expressionPieces.A) == null ? void 0 : _c2.classList.toggle("is-active", lastActive === "A");
+    (_d2 = expressionPieces.B) == null ? void 0 : _d2.classList.toggle("is-active", lastActive === "B");
+  }
+  function handlePadButton(target, btn) {
+    if (!target) return;
+    if (target !== lastActive) {
+      pendingClear[target] = true;
+    }
+    if (pendingClear[target]) {
+      setOperand(target, "");
+      pendingClear[target] = false;
+    }
+    if (btn.dataset.digit !== void 0) {
+      appendDigit(target, btn.dataset.digit);
+    } else {
+      switch (btn.dataset.action) {
+        case "dot":
+          appendDot(target);
+          break;
+        case "sign":
+          toggleSign(target);
+          break;
+        case "backspace":
+          backspace(target);
+          break;
+        case "clear":
+          setOperand(target, "");
+          pendingClear[target] = false;
+          break;
+        default:
+          break;
+      }
+    }
+    lastActive = target;
+    refresh();
+  }
+  document.querySelectorAll(selectors.padRoot).forEach((pad) => {
+    pad.querySelectorAll("button").forEach((btn) => {
+      btn.addEventListener("click", (ev) => {
+        ev.preventDefault();
+        const target = determinePadTarget({ pad, button: btn });
+        if (target !== "A" && target !== "B") return;
+        handlePadButton(target, btn);
+      });
+    });
+  });
+  opButtons.forEach((btn) => {
+    btn.addEventListener("click", (ev) => {
+      ev.preventDefault();
+      const next = btn.dataset.op;
+      if (!operations.includes(next)) return;
+      op = next;
+      refresh();
+    });
+  });
+  clearBtn == null ? void 0 : clearBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    aStr = "";
+    bStr = "";
+    lastActive = "A";
+    pendingClear.A = false;
+    pendingClear.B = false;
+    refresh();
+  });
+  swapBtn == null ? void 0 : swapBtn.addEventListener("click", (ev) => {
+    ev.preventDefault();
+    const tmp = aStr;
+    aStr = bStr;
+    bStr = tmp;
+    lastActive = lastActive === "A" ? "B" : "A";
+    pendingClear.A = false;
+    pendingClear.B = false;
+    refresh();
+  });
+  refresh();
+  return {
+    getActiveOperand() {
+      return lastActive;
+    },
+    setActiveOperand(which) {
+      if (which !== "A" && which !== "B") return;
+      if (which !== lastActive) {
+        pendingClear[which] = true;
+      }
+      lastActive = which;
+      refresh();
+    }
+  };
+}
+
+// src/variants/dial-dom/index.js
+var latchState = { target: "A" };
+var controller = mountDualOperandCalculator({
+  selectors: {
+    fieldValueA: '[data-field-value="A"]',
+    fieldValueB: '[data-field-value="B"]',
+    fieldA: '[data-field="A"]',
+    fieldB: '[data-field="B"]',
+    resultValue: "[data-result-value]",
+    operationButtons: "[data-op]",
+    operationValue: "[data-operation-value]",
+    clearButton: '[data-action="clear-all"]',
+    swapButton: '[data-action="swap-operands"]',
+    padRoot: "[data-pad]"
+  },
+  resolvePadTarget: () => latchState.target
+});
+var padRoots = Array.from(document.querySelectorAll("[data-pad]"));
+var dial = document.querySelector("[data-dial]");
+var toggleTargetBtn = document.querySelector("[data-toggle-target]");
+var _a;
+var targetDisplay = (_a = toggleTargetBtn == null ? void 0 : toggleTargetBtn.querySelector("[data-target-display]")) != null ? _a : null;
+var _a2;
+var targetHint = (_a2 = toggleTargetBtn == null ? void 0 : toggleTargetBtn.querySelector(".hint")) != null ? _a2 : null;
+var fieldCards = Array.from(document.querySelectorAll("[data-field]"));
+function describeOperand(which) {
+  return which === "A" ? "operand A" : "operand B";
+}
+function syncTargetUI() {
+  const { target } = latchState;
+  padRoots.forEach((pad) => {
+    pad.setAttribute("data-target", target);
+  });
+  if (dial) {
+    dial.setAttribute("data-target", target);
+  }
+  if (targetDisplay) {
+    targetDisplay.textContent = target;
+  }
+  if (targetHint) {
+    const next = target === "A" ? "B" : "A";
+    targetHint.textContent = `Tap to switch to operand ${next}`;
+  }
+  if (toggleTargetBtn) {
+    toggleTargetBtn.setAttribute(
+      "aria-label",
+      `Switch active operand (currently ${describeOperand(target)})`
+    );
+  }
+}
+function setLatchTarget(next) {
+  if (next !== "A" && next !== "B") return;
+  latchState.target = next;
+  if (controller && typeof controller.setActiveOperand === "function") {
+    controller.setActiveOperand(next);
+  }
+  syncTargetUI();
+}
+fieldCards.forEach((card) => {
+  card.addEventListener("click", () => {
+    const field = card.getAttribute("data-field");
+    setLatchTarget(field);
+  });
+});
+toggleTargetBtn == null ? void 0 : toggleTargetBtn.addEventListener("click", () => {
+  setLatchTarget(latchState.target === "A" ? "B" : "A");
+});
+setLatchTarget("A");
+  </script>
+</body>
+</html>
