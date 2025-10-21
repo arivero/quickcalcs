@@ -53,6 +53,44 @@
     footer a:hover {
       text-decoration: underline;
     }
+    details.screenshots {
+      margin-top: 2rem;
+    }
+    details.screenshots > summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: #0d254d;
+    }
+    .shots {
+      list-style: none;
+      padding: 0;
+      margin: 0.75rem 0 0 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.75rem;
+    }
+    .shots li a {
+      display: grid;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      border: 1px dashed #cfd8dc;
+      border-radius: 0.5rem;
+      background: #fafcff;
+      color: #1e4081;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .shots li a:hover {
+      border-color: #b0bec5;
+      background: #f2f6fb;
+    }
+    .shots img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 0.25rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
   </style>
 </head>
 <body>
@@ -71,6 +109,35 @@
       <a href="./circular.html">Circular Calculator</a>
     </li>
   </ul>
+  <details class="screenshots">
+    <summary>Screenshots (optional)</summary>
+    <ul class="shots">
+      <li>
+        <a href="./images/keypad-single.png" target="_blank" rel="noopener">
+          Keypad (Single) – PNG
+          <img src="./images/keypad-single.png" alt="Keypad Single screenshot" loading="lazy" decoding="async">
+        </a>
+      </li>
+      <li>
+        <a href="./images/keypad-dual.png" target="_blank" rel="noopener">
+          Keypad (Dual) – PNG
+          <img src="./images/keypad-dual.png" alt="Keypad Dual screenshot" loading="lazy" decoding="async">
+        </a>
+      </li>
+      <li>
+        <a href="./images/columnar-dual.png" target="_blank" rel="noopener">
+          Columnar (Dual) – PNG
+          <img src="./images/columnar-dual.png" alt="Columnar Dual screenshot" loading="lazy" decoding="async">
+        </a>
+      </li>
+      <li>
+        <a href="./images/circular.png" target="_blank" rel="noopener">
+          Circular – PNG
+          <img src="./images/circular.png" alt="Circular screenshot" loading="lazy" decoding="async">
+        </a>
+      </li>
+    </ul>
+  </details>
   <footer>
     <a href="https://github.com/arivero/quickcalcs">View the project on GitHub Pages</a>
   </footer>
