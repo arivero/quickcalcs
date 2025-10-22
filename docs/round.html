@@ -12,7 +12,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Fast Calc" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  
+  <link rel="manifest" href="/quickcalcs/manifest.webmanifest">  
   <style>
     :root {
       --surface: #081221;
@@ -331,30 +331,6 @@
   els.dial.addEventListener('pointerdown', onDialPointerDown);
   els.dial.addEventListener('pointermove', onDialPointerMove);
   window.addEventListener('pointerup', onDialPointerUp);
-
-  // PWA manifest injection (Chromium installability)
-  (function injectManifest(){
-    try {
-      const manifest = {
-        name: "Fast Calculator",
-        short_name: "Fast Calc",
-        start_url: "./",
-        display: "standalone",
-        background_color: "#06101f",
-        theme_color: "#06101f",
-        icons: [
-          { src: "icon-192.png", sizes: "192x192", type: "image/png" },
-          { src: "icon-512.png", sizes: "512x512", type: "image/png" }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: "application/manifest+json" });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('link');
-      link.rel = 'manifest';
-      link.href = url;
-      document.head.appendChild(link);
-    } catch {}
-  })();
 
   // Initial paint from a true reset state
   resetAll();
