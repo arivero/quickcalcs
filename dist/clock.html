@@ -46,37 +46,11 @@
       border-radius: 20px;
       padding: clamp(12px, 4vw, 20px);
       box-shadow: 0 18px 48px rgba(5, 12, 24, 0.4);
+      position: relative;
     }
     header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
-    }
-    header select {
-      appearance: none;
-      background: rgba(12, 20, 36, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      border-radius: 10px;
-      color: var(--ink);
-      padding: 8px 26px 8px 12px;
-      font-size: 14px;
-      font-weight: 600;
-    }
-    header button {
-      background: rgba(12, 20, 36, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      color: var(--ink);
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 10px;
-      padding: 8px 14px;
-      cursor: pointer;
-      transition: border 0.15s ease, transform 0.15s ease;
-    }
-    header button:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
+      position: relative;
+      min-height: 36px;
     }
     .clock-shell {
       position: relative;
@@ -174,30 +148,39 @@
       word-break: break-word;
       max-width: 120px;
     }
+    .corner-buttons {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    .corner-buttons button,
+    .corner-buttons select {
+      pointer-events: auto;
+    }
     .fields {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
+      display: contents;
     }
     .fields button {
-      flex: 1;
-      background: rgba(12, 20, 36, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      padding: 10px 12px;
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: rgba(12, 20, 36, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
       color: var(--ink);
-      font-size: 12px;
-      letter-spacing: 0.3px;
-      cursor: pointer;
-      display: grid;
-      gap: 4px;
-      transition: border 0.15s ease, box-shadow 0.15s ease;
-    }
-    .fields button .value {
-      font-size: 16px;
       font-weight: 600;
-      word-break: break-word;
-      min-height: 1.2em;
+      display: grid;
+      place-items: center;
+      font-size: 14px;
+      cursor: pointer;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    .fields button .value,
+    .fields button span:first-child {
+      display: none;
+    }
+    .fields button::after {
+      content: attr(data-field);
     }
     .fields button.is-active {
       border-color: var(--accent);
@@ -275,18 +258,13 @@
       transform: translateY(-1px);
     }
     @media (max-width: 420px) {
-      header {
-        flex-direction: column;
-        align-items: stretch;
+      .corner-buttons {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
       }
-      header button,
-      header select {
-        width: 100%;
-      }
-      .fields {
-        flex-direction: column;
-      }
-      .fields button {
+      .corner-buttons button,
+      .corner-buttons select {
         width: 100%;
       }
     }
@@ -298,8 +276,8 @@
 </head>
 <body class="layout-vertical">
   <main>
-    <header>
-      <button type="button" data-toggle-clock>Hide clock</button>
+    <header class="corner-buttons">
+      <button type="button" data-toggle-clock>Hide</button>
       <select data-op-select aria-label="Select operation">
         <option value="+">A + B</option>
         <option value="×" selected>A × B</option>
@@ -607,8 +585,25 @@ function layoutRing() {
   const bounds = els.pad.getBoundingClientRect();
   const sampleButton = ringButtons[0];
   const sampleSize = sampleButton.offsetWidth || sampleButton.getBoundingClientRect().width;
-  const radius = Math.max(36, Math.min(bounds.width, bounds.height) / 2 - sampleSize / 2 - 6);
+  const radius = Math.max(36, Math.min(bounds.width, bounds.height) / 2 - sampleSize / 2 - 12);
   els.pad.style.setProperty("--ring-radius", `${radius}px`);
+  const offset = sampleSize * 0.6;
+  if (els.fields.A && els.fields.B) {
+    els.fields.A.style.left = `${offset}px`;
+    els.fields.A.style.bottom = `${offset}px`;
+    els.fields.B.style.right = `${offset}px`;
+    els.fields.B.style.bottom = `${offset}px`;
+  }
+  if (els.toggleClock) {
+    els.toggleClock.style.position = "absolute";
+    els.toggleClock.style.left = `${offset}px`;
+    els.toggleClock.style.top = `${offset * 0.6}px`;
+  }
+  if (els.opSelect) {
+    els.opSelect.style.position = "absolute";
+    els.opSelect.style.right = `${offset}px`;
+    els.opSelect.style.top = `${offset * 0.6}px`;
+  }
 }
 function currentStr() {
   return lock.getActive() === "A" ? state.a : state.b;
@@ -643,7 +638,7 @@ function render() {
   if (els.clockFace) {
     els.clockFace.style.display = clockVisible ? "block" : "none";
   }
-  els.toggleClock.textContent = clockVisible ? "Hide clock" : "Show clock";
+  els.toggleClock.textContent = clockVisible ? "Hide" : "Show";
 }
 function appendDigit(digit) {
   let value = currentStr();

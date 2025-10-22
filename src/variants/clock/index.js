@@ -54,8 +54,25 @@ function layoutRing() {
   const bounds = els.pad.getBoundingClientRect();
   const sampleButton = ringButtons[0];
   const sampleSize = sampleButton.offsetWidth || sampleButton.getBoundingClientRect().width;
-  const radius = Math.max(36, Math.min(bounds.width, bounds.height) / 2 - sampleSize / 2 - 6);
+  const radius = Math.max(36, Math.min(bounds.width, bounds.height) / 2 - sampleSize / 2 - 12);
   els.pad.style.setProperty('--ring-radius', `${radius}px`);
+  const offset = sampleSize * 0.6;
+  if (els.fields.A && els.fields.B) {
+    els.fields.A.style.left = `${offset}px`;
+    els.fields.A.style.bottom = `${offset}px`;
+    els.fields.B.style.right = `${offset}px`;
+    els.fields.B.style.bottom = `${offset}px`;
+  }
+  if (els.toggleClock) {
+    els.toggleClock.style.position = 'absolute';
+    els.toggleClock.style.left = `${offset}px`;
+    els.toggleClock.style.top = `${offset * 0.6}px`;
+  }
+  if (els.opSelect) {
+    els.opSelect.style.position = 'absolute';
+    els.opSelect.style.right = `${offset}px`;
+    els.opSelect.style.top = `${offset * 0.6}px`;
+  }
 }
 
 function currentStr() {
@@ -97,7 +114,7 @@ function render() {
   if (els.clockFace) {
     els.clockFace.style.display = clockVisible ? 'block' : 'none';
   }
-  els.toggleClock.textContent = clockVisible ? 'Hide clock' : 'Show clock';
+  els.toggleClock.textContent = clockVisible ? 'Hide' : 'Show';
 }
 
 function appendDigit(digit) {
