@@ -252,10 +252,10 @@ function updateClock() {
   const minutes = now.getMinutes() + now.getSeconds() / 60;
   const hours = (now.getHours() % 12) + minutes / 60;
   if (els.hands.minute) {
-    els.hands.minute.style.transform = `translateX(-50%) rotate(${minutes * 6}deg)`;
+    els.hands.minute.style.transform = `translate(-50%, 50%) rotate(${minutes * 6}deg)`;
   }
   if (els.hands.hour) {
-    els.hands.hour.style.transform = `translateX(-50%) rotate(${hours * 30}deg)`;
+    els.hands.hour.style.transform = `translate(-50%, 50%) rotate(${hours * 30}deg)`;
   }
 }
 
@@ -276,6 +276,18 @@ els.actions.backspace?.addEventListener('click', (ev) => {
 els.actions.reset?.addEventListener('click', (ev) => {
   ev.preventDefault();
   resetAll();
+});
+
+// Prevent dial from stealing pointerdown on corner controls
+[
+  els.toggleClock,
+  els.opSelect,
+  els.fields.A,
+  els.fields.B,
+].forEach((el) => {
+  el?.addEventListener('pointerdown', (ev) => {
+    ev.stopPropagation();
+  }, { passive: true });
 });
 
 els.opSelect?.addEventListener('change', (ev) => {

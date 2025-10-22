@@ -63,10 +63,10 @@
     }
     .hand {
       position: absolute;
-      bottom: 50%;
+      bottom: 0;
       left: 50%;
-      transform-origin: bottom center;
-      transform: translateX(-50%) rotate(0deg);
+      transform-origin: 50% 100%;
+      transform: translate(-50%, 0) rotate(0deg);
       background: var(--accent);
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(122, 195, 255, 0.3);
@@ -93,7 +93,7 @@
     }
     .clock-shell .expression {
       position: absolute;
-      inset: 24px 22px 26px;
+      inset: 30px 22px 34px;
       display: grid;
       gap: 6px;
       place-items: center;

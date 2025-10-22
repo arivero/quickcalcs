@@ -84,10 +84,10 @@
     }
     .hand {
       position: absolute;
-      bottom: 50%;
+      bottom: 0;
       left: 50%;
-      transform-origin: bottom center;
-      transform: translateX(-50%) rotate(0deg);
+      transform-origin: 50% 100%;
+      transform: translate(-50%, 0) rotate(0deg);
       background: var(--accent);
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(122, 195, 255, 0.3);
@@ -114,7 +114,7 @@
     }
     .clock-shell .expression {
       position: absolute;
-      inset: 24px 22px 26px;
+      inset: 30px 22px 34px;
       display: grid;
       gap: 6px;
       place-items: center;
@@ -761,10 +761,10 @@ function updateClock() {
   const minutes = now.getMinutes() + now.getSeconds() / 60;
   const hours = now.getHours() % 12 + minutes / 60;
   if (els.hands.minute) {
-    els.hands.minute.style.transform = `translateX(-50%) rotate(${minutes * 6}deg)`;
+    els.hands.minute.style.transform = `translate(-50%, 50%) rotate(${minutes * 6}deg)`;
   }
   if (els.hands.hour) {
-    els.hands.hour.style.transform = `translateX(-50%) rotate(${hours * 30}deg)`;
+    els.hands.hour.style.transform = `translate(-50%, 50%) rotate(${hours * 30}deg)`;
   }
 }
 els.fields.A?.addEventListener("click", () => toggleLock("A"));
@@ -780,6 +780,16 @@ els.actions.backspace?.addEventListener("click", (ev) => {
 els.actions.reset?.addEventListener("click", (ev) => {
   ev.preventDefault();
   resetAll();
+});
+[
+  els.toggleClock,
+  els.opSelect,
+  els.fields.A,
+  els.fields.B
+].forEach((el) => {
+  el?.addEventListener("pointerdown", (ev) => {
+    ev.stopPropagation();
+  }, { passive: true });
 });
 els.opSelect?.addEventListener("change", (ev) => {
   const value = ev.target.value;
