@@ -47,6 +47,7 @@ let swiping = false;
 let lastHot = null;
 let flipArmed = false;
 let clockVisible = true;
+let activePointerId = null;
 const ringButtons = els.pad ? Array.from(els.pad.querySelectorAll('button[data-ring-pos]')) : [];
 
 function layoutRing() {
@@ -204,6 +205,7 @@ function handleKey(btn) {
 function onDialPointerDown(ev) {
   if (ev.pointerType === 'mouse' && ev.button !== 0) return;
   ev.preventDefault();
+  activePointerId = ev.pointerId;
   const startBtn = buttonFromPoint(ev.clientX, ev.clientY);
   if (startBtn) {
     if (lock.getLocked()) {
@@ -221,16 +223,11 @@ function onDialPointerDown(ev) {
     setHot(null);
   }
   swiping = true;
-  try {
-    ev.target.setPointerCapture(ev.pointerId);
-  } catch {
-    // ignore
-  }
   flipArmed = true;
 }
 
 function onDialPointerMove(ev) {
-  if (!swiping) return;
+  if (!swiping || (activePointerId !== null && ev.pointerId !== activePointerId)) return;
   const btn = buttonFromPoint(ev.clientX, ev.clientY);
   if (btn) {
     if (btn !== lastHot) {
@@ -242,10 +239,11 @@ function onDialPointerMove(ev) {
   }
 }
 
-function onDialPointerUp() {
-  if (!swiping) return;
+function onDialPointerUp(ev) {
+  if (!swiping || (activePointerId !== null && ev.pointerId !== activePointerId)) return;
   swiping = false;
   setHot(null);
+  activePointerId = null;
 }
 
 function updateClock() {
@@ -287,8 +285,9 @@ els.actions.reset?.addEventListener('click', (ev) => {
   els.fields.B,
 ].forEach((el) => {
   if (!el) return;
-  ['pointerdown','mousedown','touchstart','click'].forEach((type) => {
+  ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach((type) => {
     el.addEventListener(type, (ev) => {
+      ev.stopImmediatePropagation();
       ev.stopPropagation();
     }, { passive: true });
   });
@@ -310,7 +309,7 @@ els.toggleClock?.addEventListener('click', (ev) => {
 });
 
 els.dial?.addEventListener('pointerdown', onDialPointerDown);
-els.dial?.addEventListener('pointermove', onDialPointerMove);
+window.addEventListener('pointermove', onDialPointerMove);
 window.addEventListener('pointerup', onDialPointerUp);
 window.addEventListener('resize', layoutRing);
 

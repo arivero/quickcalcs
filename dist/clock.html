@@ -105,12 +105,15 @@
     }
     .clock-center {
       position: absolute;
+      top: 50%;
+      left: 50%;
       width: 12px;
       height: 12px;
       border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 0 4px rgba(122, 195, 255, 0.25);
       z-index: 5;
+      transform: translate(-50%, -50%);
     }
     .clock-shell .expression {
       position: absolute;
@@ -154,6 +157,7 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
+      z-index: 6;
     }
     .corner-buttons button,
     .corner-buttons select {
@@ -581,6 +585,7 @@ var swiping = false;
 var lastHot = null;
 var flipArmed = false;
 var clockVisible = true;
+var activePointerId = null;
 var ringButtons = els.pad ? Array.from(els.pad.querySelectorAll("button[data-ring-pos]")) : [];
 function layoutRing() {
   if (!els.pad || ringButtons.length === 0) return;
@@ -719,6 +724,7 @@ function handleKey(btn) {
 function onDialPointerDown(ev) {
   if (ev.pointerType === "mouse" && ev.button !== 0) return;
   ev.preventDefault();
+  activePointerId = ev.pointerId;
   const startBtn = buttonFromPoint(ev.clientX, ev.clientY);
   if (startBtn) {
     if (lock.getLocked()) {
@@ -736,14 +742,10 @@ function onDialPointerDown(ev) {
     setHot(null);
   }
   swiping = true;
-  try {
-    ev.target.setPointerCapture(ev.pointerId);
-  } catch {
-  }
   flipArmed = true;
 }
 function onDialPointerMove(ev) {
-  if (!swiping) return;
+  if (!swiping || activePointerId !== null && ev.pointerId !== activePointerId) return;
   const btn = buttonFromPoint(ev.clientX, ev.clientY);
   if (btn) {
     if (btn !== lastHot) {
@@ -754,10 +756,11 @@ function onDialPointerMove(ev) {
     setHot(null);
   }
 }
-function onDialPointerUp() {
-  if (!swiping) return;
+function onDialPointerUp(ev) {
+  if (!swiping || activePointerId !== null && ev.pointerId !== activePointerId) return;
   swiping = false;
   setHot(null);
+  activePointerId = null;
 }
 function updateClock() {
   const now = /* @__PURE__ */ new Date();
@@ -793,6 +796,7 @@ els.actions.reset?.addEventListener("click", (ev) => {
   if (!el) return;
   ["pointerdown", "mousedown", "touchstart", "click"].forEach((type) => {
     el.addEventListener(type, (ev) => {
+      ev.stopImmediatePropagation();
       ev.stopPropagation();
     }, { passive: true });
   });
@@ -811,7 +815,7 @@ els.toggleClock?.addEventListener("click", (ev) => {
   render();
 });
 els.dial?.addEventListener("pointerdown", onDialPointerDown);
-els.dial?.addEventListener("pointermove", onDialPointerMove);
+window.addEventListener("pointermove", onDialPointerMove);
 window.addEventListener("pointerup", onDialPointerUp);
 window.addEventListener("resize", layoutRing);
 requestAnimationFrame(() => {

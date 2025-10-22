@@ -84,12 +84,15 @@
     }
     .clock-center {
       position: absolute;
+      top: 50%;
+      left: 50%;
       width: 12px;
       height: 12px;
       border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 0 4px rgba(122, 195, 255, 0.25);
       z-index: 5;
+      transform: translate(-50%, -50%);
     }
     .clock-shell .expression {
       position: absolute;
@@ -133,6 +136,7 @@
       position: absolute;
       inset: 0;
       pointer-events: none;
+      z-index: 6;
     }
     .corner-buttons button,
     .corner-buttons select {
