@@ -159,9 +159,21 @@
       pointer-events: none;
       z-index: 6;
     }
-    .corner-buttons button,
-    .corner-buttons select {
+    .corner-buttons button {
       pointer-events: auto;
+      background: rgba(12, 20, 36, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    .corner-buttons button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
     }
     .fields {
       display: contents;
@@ -284,12 +296,7 @@
   <main>
     <header class="corner-buttons">
       <button type="button" data-toggle-clock>Hide</button>
-      <select data-op-select aria-label="Select operation">
-        <option value="+">A + B</option>
-        <option value="×" selected>A × B</option>
-        <option value="−">A − B</option>
-        <option value=":">A : B</option>
-      </select>
+      <button type="button" data-op-toggle aria-label="Cycle operation">A × B</button>
     </header>
 
     <section class="clock-shell" data-clock-shell>
@@ -574,7 +581,7 @@ var els = {
     hour: document.querySelector("[data-clock-hour]"),
     minute: document.querySelector("[data-clock-minute]")
   },
-  opSelect: document.querySelector("[data-op-select]"),
+  opToggle: document.querySelector("[data-op-toggle]"),
   actions: {
     clear: document.querySelector('[data-action="clear"]'),
     backspace: document.querySelector('[data-action="backspace"]'),
@@ -607,10 +614,10 @@ function layoutRing() {
     els.toggleClock.style.left = `${offset}px`;
     els.toggleClock.style.top = `${offset * 0.6}px`;
   }
-  if (els.opSelect) {
-    els.opSelect.style.position = "absolute";
-    els.opSelect.style.right = `${offset}px`;
-    els.opSelect.style.top = `${offset * 0.6}px`;
+  if (els.opToggle) {
+    els.opToggle.style.position = "absolute";
+    els.opToggle.style.right = `${offset}px`;
+    els.opToggle.style.top = `${offset * 0.6}px`;
   }
 }
 function currentStr() {
@@ -632,7 +639,10 @@ function render() {
   els.expr.A.textContent = state.a;
   els.expr.B.textContent = state.b;
   els.expr.op.textContent = op;
-  els.opSelect.value = op;
+  if (els.opToggle) {
+    const label = op === ":" ? "A \xF7 B" : `A ${op} B`;
+    els.opToggle.textContent = label;
+  }
   const { text } = evaluateBinaryOperation(op, toNum(state.a), toNum(state.b));
   els.result.textContent = text;
   const active = lock.getActive();
@@ -789,12 +799,12 @@ els.actions.reset?.addEventListener("click", (ev) => {
 });
 [
   els.toggleClock,
-  els.opSelect,
+  els.opToggle,
   els.fields.A,
   els.fields.B
 ].forEach((el) => {
   if (!el) return;
-  ["pointerdown", "mousedown", "touchstart", "click"].forEach((type) => {
+  ["pointerdown", "mousedown", "touchstart"].forEach((type) => {
     el.addEventListener(type, (ev) => {
       ev.stopImmediatePropagation();
       ev.stopPropagation();
@@ -812,6 +822,11 @@ els.opSelect?.addEventListener("change", (ev) => {
 els.toggleClock?.addEventListener("click", (ev) => {
   ev.preventDefault();
   clockVisible = !clockVisible;
+  render();
+});
+els.opToggle?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  state.opIndex = (state.opIndex + 1) % OPS.length;
   render();
 });
 els.dial?.addEventListener("pointerdown", onDialPointerDown);

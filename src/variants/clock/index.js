@@ -35,7 +35,7 @@ const els = {
     hour: document.querySelector('[data-clock-hour]'),
     minute: document.querySelector('[data-clock-minute]'),
   },
-  opSelect: document.querySelector('[data-op-select]'),
+  opToggle: document.querySelector('[data-op-toggle]'),
   actions: {
     clear: document.querySelector('[data-action="clear"]'),
     backspace: document.querySelector('[data-action="backspace"]'),
@@ -70,10 +70,10 @@ function layoutRing() {
     els.toggleClock.style.left = `${offset}px`;
     els.toggleClock.style.top = `${offset * 0.6}px`;
   }
-  if (els.opSelect) {
-    els.opSelect.style.position = 'absolute';
-    els.opSelect.style.right = `${offset}px`;
-    els.opSelect.style.top = `${offset * 0.6}px`;
+  if (els.opToggle) {
+    els.opToggle.style.position = 'absolute';
+    els.opToggle.style.right = `${offset}px`;
+    els.opToggle.style.top = `${offset * 0.6}px`;
   }
 }
 
@@ -100,7 +100,10 @@ function render() {
   els.expr.A.textContent = state.a;
   els.expr.B.textContent = state.b;
   els.expr.op.textContent = op;
-  els.opSelect.value = op;
+  if (els.opToggle) {
+    const label = op === ':' ? 'A ÷ B' : `A ${op} B`;
+    els.opToggle.textContent = label;
+  }
 
   const { text } = evaluateBinaryOperation(op, toNum(state.a), toNum(state.b));
   els.result.textContent = text;
@@ -280,12 +283,12 @@ els.actions.reset?.addEventListener('click', (ev) => {
 // Ensure dial doesn't intercept controls
 [
   els.toggleClock,
-  els.opSelect,
+  els.opToggle,
   els.fields.A,
   els.fields.B,
 ].forEach((el) => {
   if (!el) return;
-  ['pointerdown', 'mousedown', 'touchstart', 'click'].forEach((type) => {
+  ['pointerdown', 'mousedown', 'touchstart'].forEach((type) => {
     el.addEventListener(type, (ev) => {
       ev.stopImmediatePropagation();
       ev.stopPropagation();
@@ -305,6 +308,12 @@ els.opSelect?.addEventListener('change', (ev) => {
 els.toggleClock?.addEventListener('click', (ev) => {
   ev.preventDefault();
   clockVisible = !clockVisible;
+  render();
+});
+
+els.opToggle?.addEventListener('click', (ev) => {
+  ev.preventDefault();
+  state.opIndex = (state.opIndex + 1) % OPS.length;
   render();
 });
 
