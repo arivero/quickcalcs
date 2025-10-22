@@ -63,10 +63,10 @@
     }
     .hand {
       position: absolute;
-      bottom: 0;
+      top: 50%;
       left: 50%;
       transform-origin: 50% 100%;
-      transform: translate(-50%, 0) rotate(0deg);
+      transform: translate(-50%, -100%) rotate(0deg);
       background: var(--accent);
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(122, 195, 255, 0.3);
@@ -93,7 +93,7 @@
     }
     .clock-shell .expression {
       position: absolute;
-      inset: 30px 22px 34px;
+      inset: 28px 22px 28px;
       display: grid;
       gap: 6px;
       place-items: center;
@@ -111,6 +111,7 @@
       justify-content: center;
       font-weight: 600;
       text-transform: uppercase;
+      margin-top: 10px; /* a bit lower */
     }
     .clock-shell .expression .equation span {
       min-width: 0;
@@ -126,6 +127,7 @@
       color: #fff;
       word-break: break-word;
       max-width: 120px;
+      margin-top: -4px; /* a bit higher */
     }
     .corner-buttons {
       position: absolute;

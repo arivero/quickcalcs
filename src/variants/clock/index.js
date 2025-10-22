@@ -58,10 +58,11 @@ function layoutRing() {
   els.pad.style.setProperty('--ring-radius', `${radius}px`);
   const offset = sampleSize * 0.6;
   if (els.fields.A && els.fields.B) {
+    const raised = offset + sampleSize; // raise by ~own size
     els.fields.A.style.left = `${offset}px`;
-    els.fields.A.style.bottom = `${offset}px`;
+    els.fields.A.style.bottom = `${raised}px`;
     els.fields.B.style.right = `${offset}px`;
-    els.fields.B.style.bottom = `${offset}px`;
+    els.fields.B.style.bottom = `${raised}px`;
   }
   if (els.toggleClock) {
     els.toggleClock.style.position = 'absolute';
@@ -252,10 +253,10 @@ function updateClock() {
   const minutes = now.getMinutes() + now.getSeconds() / 60;
   const hours = (now.getHours() % 12) + minutes / 60;
   if (els.hands.minute) {
-    els.hands.minute.style.transform = `translate(-50%, 50%) rotate(${minutes * 6}deg)`;
+    els.hands.minute.style.transform = `translate(-50%, -100%) rotate(${minutes * 6}deg)`;
   }
   if (els.hands.hour) {
-    els.hands.hour.style.transform = `translate(-50%, 50%) rotate(${hours * 30}deg)`;
+    els.hands.hour.style.transform = `translate(-50%, -100%) rotate(${hours * 30}deg)`;
   }
 }
 
@@ -278,16 +279,19 @@ els.actions.reset?.addEventListener('click', (ev) => {
   resetAll();
 });
 
-// Prevent dial from stealing pointerdown on corner controls
+// Ensure dial doesn't intercept controls
 [
   els.toggleClock,
   els.opSelect,
   els.fields.A,
   els.fields.B,
 ].forEach((el) => {
-  el?.addEventListener('pointerdown', (ev) => {
-    ev.stopPropagation();
-  }, { passive: true });
+  if (!el) return;
+  ['pointerdown','mousedown','touchstart','click'].forEach((type) => {
+    el.addEventListener(type, (ev) => {
+      ev.stopPropagation();
+    }, { passive: true });
+  });
 });
 
 els.opSelect?.addEventListener('change', (ev) => {

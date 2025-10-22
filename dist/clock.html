@@ -84,10 +84,10 @@
     }
     .hand {
       position: absolute;
-      bottom: 0;
+      top: 50%;
       left: 50%;
       transform-origin: 50% 100%;
-      transform: translate(-50%, 0) rotate(0deg);
+      transform: translate(-50%, -100%) rotate(0deg);
       background: var(--accent);
       border-radius: 6px;
       box-shadow: 0 4px 12px rgba(122, 195, 255, 0.3);
@@ -114,7 +114,7 @@
     }
     .clock-shell .expression {
       position: absolute;
-      inset: 30px 22px 34px;
+      inset: 28px 22px 28px;
       display: grid;
       gap: 6px;
       place-items: center;
@@ -132,6 +132,7 @@
       justify-content: center;
       font-weight: 600;
       text-transform: uppercase;
+      margin-top: 10px; /* a bit lower */
     }
     .clock-shell .expression .equation span {
       min-width: 0;
@@ -147,6 +148,7 @@
       color: #fff;
       word-break: break-word;
       max-width: 120px;
+      margin-top: -4px; /* a bit higher */
     }
     .corner-buttons {
       position: absolute;
@@ -589,10 +591,11 @@ function layoutRing() {
   els.pad.style.setProperty("--ring-radius", `${radius}px`);
   const offset = sampleSize * 0.6;
   if (els.fields.A && els.fields.B) {
+    const raised = offset + sampleSize;
     els.fields.A.style.left = `${offset}px`;
-    els.fields.A.style.bottom = `${offset}px`;
+    els.fields.A.style.bottom = `${raised}px`;
     els.fields.B.style.right = `${offset}px`;
-    els.fields.B.style.bottom = `${offset}px`;
+    els.fields.B.style.bottom = `${raised}px`;
   }
   if (els.toggleClock) {
     els.toggleClock.style.position = "absolute";
@@ -761,10 +764,10 @@ function updateClock() {
   const minutes = now.getMinutes() + now.getSeconds() / 60;
   const hours = now.getHours() % 12 + minutes / 60;
   if (els.hands.minute) {
-    els.hands.minute.style.transform = `translate(-50%, 50%) rotate(${minutes * 6}deg)`;
+    els.hands.minute.style.transform = `translate(-50%, -100%) rotate(${minutes * 6}deg)`;
   }
   if (els.hands.hour) {
-    els.hands.hour.style.transform = `translate(-50%, 50%) rotate(${hours * 30}deg)`;
+    els.hands.hour.style.transform = `translate(-50%, -100%) rotate(${hours * 30}deg)`;
   }
 }
 els.fields.A?.addEventListener("click", () => toggleLock("A"));
@@ -787,9 +790,12 @@ els.actions.reset?.addEventListener("click", (ev) => {
   els.fields.A,
   els.fields.B
 ].forEach((el) => {
-  el?.addEventListener("pointerdown", (ev) => {
-    ev.stopPropagation();
-  }, { passive: true });
+  if (!el) return;
+  ["pointerdown", "mousedown", "touchstart", "click"].forEach((type) => {
+    el.addEventListener(type, (ev) => {
+      ev.stopPropagation();
+    }, { passive: true });
+  });
 });
 els.opSelect?.addEventListener("change", (ev) => {
   const value = ev.target.value;
