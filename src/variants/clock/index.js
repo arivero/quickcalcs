@@ -27,7 +27,9 @@ const els = {
   },
   result: document.querySelector('[data-result]'),
   dial: document.querySelector('[data-dial]'),
+  pad: document.querySelector('[data-pad]'),
   toggleClock: document.querySelector('[data-toggle-clock]'),
+  clockShell: document.querySelector('[data-clock-shell]'),
   clockFace: document.querySelector('[data-clock-face]'),
   hands: {
     hour: document.querySelector('[data-clock-hour]'),
@@ -45,6 +47,16 @@ let swiping = false;
 let lastHot = null;
 let flipArmed = false;
 let clockVisible = true;
+const ringButtons = els.pad ? Array.from(els.pad.querySelectorAll('button[data-ring-pos]')) : [];
+
+function layoutRing() {
+  if (!els.pad || ringButtons.length === 0) return;
+  const bounds = els.pad.getBoundingClientRect();
+  const sampleButton = ringButtons[0];
+  const sampleSize = sampleButton.offsetWidth || sampleButton.getBoundingClientRect().width;
+  const radius = Math.max(36, Math.min(bounds.width, bounds.height) / 2 - sampleSize / 2 - 6);
+  els.pad.style.setProperty('--ring-radius', `${radius}px`);
+}
 
 function currentStr() {
   return lock.getActive() === 'A' ? state.a : state.b;
@@ -81,7 +93,10 @@ function render() {
   els.fields.B.classList.toggle('is-locked', lock.isLocked('B'));
   els.expr.A.classList.toggle('is-active', active === 'A');
   els.expr.B.classList.toggle('is-active', active === 'B');
-  els.clockFace.classList.toggle('is-hidden', !clockVisible);
+  els.clockShell?.classList.toggle('is-hidden', !clockVisible);
+  if (els.clockFace) {
+    els.clockFace.style.display = clockVisible ? 'block' : 'none';
+  }
   els.toggleClock.textContent = clockVisible ? 'Hide clock' : 'Show clock';
 }
 
@@ -264,6 +279,11 @@ els.toggleClock?.addEventListener('click', (ev) => {
 els.dial?.addEventListener('pointerdown', onDialPointerDown);
 els.dial?.addEventListener('pointermove', onDialPointerMove);
 window.addEventListener('pointerup', onDialPointerUp);
+window.addEventListener('resize', layoutRing);
+
+requestAnimationFrame(() => {
+  layoutRing();
+});
 
 render();
 updateClock();
