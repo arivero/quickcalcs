@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <title>Dual Keypad Calculator</title>
   <style>
     :root { color-scheme: dark; }
@@ -124,6 +124,21 @@
       text-align: center;
       word-break: break-all;
     }
+    .result-card .expression {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.2px;
+    }
+    .result-card .expression span {
+      min-width: 0;
+    }
+    .result-card .expression .is-active {
+      color: var(--ink);
+      font-weight: 600;
+    }
     .pads {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -244,6 +259,11 @@
     <section class="result-card">
       <span class="label">Result</span>
 <span class="value" data-result-value>0</span>
+<span class="expression">
+  <span data-expression-value="A">0</span>
+  <span data-expression-op>&times;</span>
+  <span data-expression-value="B">0</span>
+</span>
     </section>
 
     <section class="pads">
@@ -296,31 +316,70 @@
   // src/variants/shared/precision.js
 var buffer = new ArrayBuffer(8);
 var view = new DataView(buffer);
-var LOW_MASK = 4294967280;
-function normalizeDecimalString(str) {
-  if (!str.includes(".")) return str;
-  let next = str.replace(/(\.\d*?)0+$/, "$1");
-  if (next.endsWith(".")) next = next.slice(0, -1);
-  return next;
+var MASK_52 = (1n << 52n) - 1n;
+var ROUND_GUARD = 0xfn;
+var KEEP_MASK = (1n << 48n) - 1n;
+function toBigInt(value) {
+  view.setFloat64(0, value, false);
+  const hi = BigInt(view.getUint32(0, false));
+  const lo = BigInt(view.getUint32(4, false));
+  return hi << 32n | lo;
 }
-function truncateTo48Bits(value) {
+function fromBigInt(bits) {
+  const hi = Number(bits >> 32n & 0xffffffffn);
+  const lo = Number(bits & 0xffffffffn);
+  view.setUint32(0, hi, false);
+  view.setUint32(4, lo, false);
+  return view.getFloat64(0, false);
+}
+function roundTo48Bits(value) {
   if (!Number.isFinite(value)) return value;
-  view.setFloat64(0, value);
-  const hi = view.getUint32(0);
-  const lo = view.getUint32(4) & LOW_MASK;
-  view.setUint32(0, hi);
-  view.setUint32(4, lo);
-  return view.getFloat64(0);
-}
-function formatTruncated(value) {
-  if (!Number.isFinite(value)) {
-    if (Number.isNaN(value)) return "\u2014";
-    return value >= 0 ? "\u221E" : "\u2212\u221E";
+  let bits = toBigInt(value);
+  const sign = bits >> 63n;
+  let exponent = bits >> 52n & 0x7ffn;
+  let mantissa = bits & MASK_52;
+  if (exponent === 0x7ffn || exponent === 0n) {
+    return value;
   }
-  const truncated = truncateTo48Bits(value);
-  const normalized = Number.parseFloat(truncated.toPrecision(14));
-  const text = normalized.toString();
-  return normalizeDecimalString(text);
+  const keep = mantissa >> 4n;
+  const discarded = mantissa & ROUND_GUARD;
+  let rounded = keep;
+  const HALF = 0x8n;
+  if (discarded > HALF || discarded === HALF && (keep & 1n) === 1n) {
+    rounded = keep + 1n;
+    if (rounded >> 48n) {
+      rounded &= KEEP_MASK;
+      exponent += 1n;
+      if (exponent >= 0x7ffn) {
+        return sign === 0n ? Infinity : -Infinity;
+      }
+    }
+  }
+  mantissa = rounded << 4n & MASK_52;
+  bits = sign << 63n | exponent << 52n | mantissa;
+  return fromBigInt(bits);
+}
+function formatRounded(value) {
+  const rounded = roundTo48Bits(value);
+  if (!Number.isFinite(rounded)) {
+    return "\u2014";
+  }
+  const abs = Math.abs(rounded);
+  let text;
+  if (abs >= 1e12 || abs > 0 && abs < 1e-6) {
+    text = rounded.toPrecision(12);
+  } else {
+    text = rounded.toFixed(12);
+  }
+  if (text.includes("e") || text.includes("E")) {
+    return text;
+  }
+  if (text.includes(".")) {
+    while (text.endsWith("0")) text = text.slice(0, -1);
+    if (text.endsWith(".")) text = text.slice(0, -1);
+  }
+  if (text === "-0") return "0";
+  return text;
 }
 function evaluateBinaryOperation(op, A, B) {
   if (!Number.isFinite(A) || !Number.isFinite(B)) {
@@ -339,7 +398,7 @@ function evaluateBinaryOperation(op, A, B) {
       break;
     case ":":
       if (B === 0) {
-        return { value: Infinity, text: "\u221E" };
+        return { value: NaN, text: "\u2014" };
       }
       result = A / B;
       break;
@@ -347,16 +406,14 @@ function evaluateBinaryOperation(op, A, B) {
       return { value: NaN, text: "\u2014" };
   }
   if (!Number.isFinite(result)) {
-    if (Number.isNaN(result)) return { value: NaN, text: "\u2014" };
-    return { value: result, text: result >= 0 ? "\u221E" : "\u2212\u221E" };
+    return { value: NaN, text: "\u2014" };
   }
-  const truncated = truncateTo48Bits(result);
-  return { value: truncated, text: formatTruncated(truncated) };
+  const rounded = roundTo48Bits(result);
+  return { value: rounded, text: formatRounded(rounded) };
 }
 
 // src/variants/shared/mountDualOperandCalculator.js
 function mountDualOperandCalculator(options = {}) {
-  var _a, _b, _c, _d, _e;
   const {
     operations = ["+", "\u2212", "\xD7", ":"],
     selectors = {
@@ -378,8 +435,8 @@ function mountDualOperandCalculator(options = {}) {
     B: document.querySelector(selectors.fieldValueB)
   };
   const expressionPieces = {
-    A: (_b = (_a = fieldValues.A) == null ? void 0 : _a.closest('[data-expression="A"]')) != null ? _b : null,
-    B: (_d = (_c = fieldValues.B) == null ? void 0 : _c.closest('[data-expression="B"]')) != null ? _d : null
+    A: fieldValues.A?.closest('[data-expression="A"]') ?? null,
+    B: fieldValues.B?.closest('[data-expression="B"]') ?? null
   };
   const operationValue = selectors.operationValue ? document.querySelector(selectors.operationValue) : null;
   const fieldCards = {
@@ -388,6 +445,11 @@ function mountDualOperandCalculator(options = {}) {
   };
   const resultValue = document.querySelector(selectors.resultValue);
   const opButtons = Array.from(document.querySelectorAll(selectors.operationButtons));
+  const expressionValues = {
+    A: document.querySelector('[data-expression-value="A"]'),
+    B: document.querySelector('[data-expression-value="B"]'),
+    op: document.querySelector("[data-expression-op]")
+  };
   const clearBtn = document.querySelector(selectors.clearButton);
   const swapBtn = document.querySelector(selectors.swapButton);
   if (!fieldValues.A || !fieldValues.B || !resultValue) {
@@ -396,7 +458,7 @@ function mountDualOperandCalculator(options = {}) {
   }
   let aStr = "";
   let bStr = "";
-  let op = (_e = operations[2]) != null ? _e : "\xD7";
+  let op = operations[2] ?? "\xD7";
   let lastActive = "A";
   const pendingClear = { A: false, B: false };
   const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive }) : ({ pad }) => pad.getAttribute("data-pad");
@@ -446,7 +508,6 @@ function mountDualOperandCalculator(options = {}) {
     setOperand(which, s);
   }
   function refresh() {
-    var _a2, _b2, _c2, _d2;
     const { text: resultText } = evaluateBinaryOperation(op, Number(aStr), Number(bStr));
     fieldValues.A.textContent = displayValue(aStr);
     fieldValues.B.textContent = displayValue(bStr);
@@ -454,13 +515,24 @@ function mountDualOperandCalculator(options = {}) {
     if (operationValue) {
       operationValue.textContent = op;
     }
+    if (expressionValues.A) {
+      expressionValues.A.textContent = displayValue(aStr);
+      expressionValues.A.classList.toggle("is-active", lastActive === "A");
+    }
+    if (expressionValues.B) {
+      expressionValues.B.textContent = displayValue(bStr);
+      expressionValues.B.classList.toggle("is-active", lastActive === "B");
+    }
+    if (expressionValues.op) {
+      expressionValues.op.textContent = op;
+    }
     opButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.op === op);
     });
-    (_a2 = fieldCards.A) == null ? void 0 : _a2.classList.toggle("is-active", lastActive === "A");
-    (_b2 = fieldCards.B) == null ? void 0 : _b2.classList.toggle("is-active", lastActive === "B");
-    (_c2 = expressionPieces.A) == null ? void 0 : _c2.classList.toggle("is-active", lastActive === "A");
-    (_d2 = expressionPieces.B) == null ? void 0 : _d2.classList.toggle("is-active", lastActive === "B");
+    fieldCards.A?.classList.toggle("is-active", lastActive === "A");
+    fieldCards.B?.classList.toggle("is-active", lastActive === "B");
+    expressionPieces.A?.classList.toggle("is-active", lastActive === "A");
+    expressionPieces.B?.classList.toggle("is-active", lastActive === "B");
   }
   function handlePadButton(target, btn) {
     if (!target) return;
@@ -514,7 +586,7 @@ function mountDualOperandCalculator(options = {}) {
       refresh();
     });
   });
-  clearBtn == null ? void 0 : clearBtn.addEventListener("click", (ev) => {
+  clearBtn?.addEventListener("click", (ev) => {
     ev.preventDefault();
     aStr = "";
     bStr = "";
@@ -523,7 +595,7 @@ function mountDualOperandCalculator(options = {}) {
     pendingClear.B = false;
     refresh();
   });
-  swapBtn == null ? void 0 : swapBtn.addEventListener("click", (ev) => {
+  swapBtn?.addEventListener("click", (ev) => {
     ev.preventDefault();
     const tmp = aStr;
     aStr = bStr;

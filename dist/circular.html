@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <title>Swipe Calculator — Canvas</title>
   <style>
     :root { color-scheme: dark; }
@@ -67,31 +67,70 @@
   // src/variants/shared/precision.js
 var buffer = new ArrayBuffer(8);
 var view = new DataView(buffer);
-var LOW_MASK = 4294967280;
-function normalizeDecimalString(str) {
-  if (!str.includes(".")) return str;
-  let next = str.replace(/(\.\d*?)0+$/, "$1");
-  if (next.endsWith(".")) next = next.slice(0, -1);
-  return next;
+var MASK_52 = (1n << 52n) - 1n;
+var ROUND_GUARD = 0xfn;
+var KEEP_MASK = (1n << 48n) - 1n;
+function toBigInt(value) {
+  view.setFloat64(0, value, false);
+  const hi = BigInt(view.getUint32(0, false));
+  const lo = BigInt(view.getUint32(4, false));
+  return hi << 32n | lo;
 }
-function truncateTo48Bits(value) {
+function fromBigInt(bits) {
+  const hi = Number(bits >> 32n & 0xffffffffn);
+  const lo = Number(bits & 0xffffffffn);
+  view.setUint32(0, hi, false);
+  view.setUint32(4, lo, false);
+  return view.getFloat64(0, false);
+}
+function roundTo48Bits(value) {
   if (!Number.isFinite(value)) return value;
-  view.setFloat64(0, value);
-  const hi = view.getUint32(0);
-  const lo = view.getUint32(4) & LOW_MASK;
-  view.setUint32(0, hi);
-  view.setUint32(4, lo);
-  return view.getFloat64(0);
-}
-function formatTruncated(value) {
-  if (!Number.isFinite(value)) {
-    if (Number.isNaN(value)) return "\u2014";
-    return value >= 0 ? "\u221E" : "\u2212\u221E";
+  let bits = toBigInt(value);
+  const sign = bits >> 63n;
+  let exponent = bits >> 52n & 0x7ffn;
+  let mantissa = bits & MASK_52;
+  if (exponent === 0x7ffn || exponent === 0n) {
+    return value;
   }
-  const truncated = truncateTo48Bits(value);
-  const normalized = Number.parseFloat(truncated.toPrecision(14));
-  const text = normalized.toString();
-  return normalizeDecimalString(text);
+  const keep = mantissa >> 4n;
+  const discarded = mantissa & ROUND_GUARD;
+  let rounded = keep;
+  const HALF = 0x8n;
+  if (discarded > HALF || discarded === HALF && (keep & 1n) === 1n) {
+    rounded = keep + 1n;
+    if (rounded >> 48n) {
+      rounded &= KEEP_MASK;
+      exponent += 1n;
+      if (exponent >= 0x7ffn) {
+        return sign === 0n ? Infinity : -Infinity;
+      }
+    }
+  }
+  mantissa = rounded << 4n & MASK_52;
+  bits = sign << 63n | exponent << 52n | mantissa;
+  return fromBigInt(bits);
+}
+function formatRounded(value) {
+  const rounded = roundTo48Bits(value);
+  if (!Number.isFinite(rounded)) {
+    return "\u2014";
+  }
+  const abs = Math.abs(rounded);
+  let text;
+  if (abs >= 1e12 || abs > 0 && abs < 1e-6) {
+    text = rounded.toPrecision(12);
+  } else {
+    text = rounded.toFixed(12);
+  }
+  if (text.includes("e") || text.includes("E")) {
+    return text;
+  }
+  if (text.includes(".")) {
+    while (text.endsWith("0")) text = text.slice(0, -1);
+    if (text.endsWith(".")) text = text.slice(0, -1);
+  }
+  if (text === "-0") return "0";
+  return text;
 }
 function evaluateBinaryOperation(op, A, B) {
   if (!Number.isFinite(A) || !Number.isFinite(B)) {
@@ -110,7 +149,7 @@ function evaluateBinaryOperation(op, A, B) {
       break;
     case ":":
       if (B === 0) {
-        return { value: Infinity, text: "\u221E" };
+        return { value: NaN, text: "\u2014" };
       }
       result = A / B;
       break;
@@ -118,11 +157,10 @@ function evaluateBinaryOperation(op, A, B) {
       return { value: NaN, text: "\u2014" };
   }
   if (!Number.isFinite(result)) {
-    if (Number.isNaN(result)) return { value: NaN, text: "\u2014" };
-    return { value: result, text: result >= 0 ? "\u221E" : "\u2212\u221E" };
+    return { value: NaN, text: "\u2014" };
   }
-  const truncated = truncateTo48Bits(result);
-  return { value: truncated, text: formatTruncated(truncated) };
+  const rounded = roundTo48Bits(result);
+  return { value: rounded, text: formatRounded(rounded) };
 }
 
 // src/variants/circular/index.js
@@ -407,12 +445,11 @@ function evaluateBinaryOperation(op, A, B) {
     swipeDisabled = false;
   }
   function onDown(ev) {
-    var _a;
     ev.preventDefault();
     pointerActive = true;
     lastKeyCell = null;
     pointerMode = null;
-    (_a = cv.setPointerCapture) == null ? void 0 : _a.call(cv, ev.pointerId);
+    cv.setPointerCapture?.(ev.pointerId);
     const { x, y } = toLocal(ev);
     if (inRect(L.fieldA, x, y)) {
       pointerMode = "fieldA";

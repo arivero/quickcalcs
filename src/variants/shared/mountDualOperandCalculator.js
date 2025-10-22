@@ -35,6 +35,11 @@ export function mountDualOperandCalculator(options = {}) {
   };
   const resultValue = document.querySelector(selectors.resultValue);
   const opButtons = Array.from(document.querySelectorAll(selectors.operationButtons));
+  const expressionValues = {
+    A: document.querySelector('[data-expression-value="A"]'),
+    B: document.querySelector('[data-expression-value="B"]'),
+    op: document.querySelector('[data-expression-op]'),
+  };
   const clearBtn = document.querySelector(selectors.clearButton);
   const swapBtn = document.querySelector(selectors.swapButton);
 
@@ -114,6 +119,17 @@ export function mountDualOperandCalculator(options = {}) {
     resultValue.textContent = resultText;
     if (operationValue) {
       operationValue.textContent = op;
+    }
+    if (expressionValues.A) {
+      expressionValues.A.textContent = displayValue(aStr);
+      expressionValues.A.classList.toggle('is-active', lastActive === 'A');
+    }
+    if (expressionValues.B) {
+      expressionValues.B.textContent = displayValue(bStr);
+      expressionValues.B.classList.toggle('is-active', lastActive === 'B');
+    }
+    if (expressionValues.op) {
+      expressionValues.op.textContent = op;
     }
     opButtons.forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.op === op);

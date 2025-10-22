@@ -1,0 +1,50 @@
+  <main>
+    <section class="fields">
+      <button type="button" class="card" data-field="A">
+        <div class="value" data-field-value="A">0</div>
+      </button>
+
+      <div class="op-wheel" aria-label="Choose operation">
+        <button type="button" data-op="+" style="--pos:0">+</button>
+        <button type="button" data-op="&times;" style="--pos:1">&times;</button>
+        <button type="button" data-op="&minus;" style="--pos:2">&minus;</button>
+        <button type="button" data-op=":" style="--pos:3">:</button>
+        <div class="op-core" data-op-display>&times;</div>
+      </div>
+
+      <button type="button" class="card" data-field="B">
+        <div class="value" data-field-value="B">0</div>
+      </button>
+    </section>
+
+    <section class="result">
+      <div class="value" data-result>0</div>
+      <div class="expression"><span data-expr-a>A</span> <span data-expr-op>&times;</span> <span data-expr-b>B</span></div>
+    </section>
+
+    <section class="dial-area">
+      <div class="dial" data-dial>
+        <div class="dial__pad" data-pad>
+          <button type="button" data-action="dot" data-ring-pos style="--pos:0">&middot;</button>
+          <button type="button" data-digit="1" data-ring-pos style="--pos:1">1</button>
+          <button type="button" data-digit="2" data-ring-pos style="--pos:2">2</button>
+          <button type="button" data-digit="3" data-ring-pos style="--pos:3">3</button>
+          <button type="button" data-digit="4" data-ring-pos style="--pos:4">4</button>
+          <button type="button" data-digit="5" data-ring-pos style="--pos:5">5</button>
+          <button type="button" data-digit="6" data-ring-pos style="--pos:6">6</button>
+          <button type="button" data-digit="7" data-ring-pos style="--pos:7">7</button>
+          <button type="button" data-digit="8" data-ring-pos style="--pos:8">8</button>
+          <button type="button" data-digit="9" data-ring-pos style="--pos:9">9</button>
+          <button type="button" data-digit="0" data-ring-pos style="--pos:10">0</button>
+          <button type="button" data-action="sign" data-ring-pos style="--pos:11">&plusmn;</button>
+        </div>
+      </div>
+
+      <div class="controls-row">
+        <button class="pill" type="button" data-action="clear">CE</button>
+        <button class="pill" type="button" data-action="backspace" aria-label="Backspace">&#9003;</button>
+        <button class="pill" type="button" data-action="reset">Reset both</button>
+      </div>
+    </section>
+  </main>
+  <footer class="site-foot">Fast Calculator Round dial + swipe</footer>

@@ -6,7 +6,7 @@ ESBUILD ?= $(shell if command -v esbuild >/dev/null 2>&1; then command -v esbuil
 ROOT := $(CURDIR)
 TMP := $(ROOT)/.tmp
 
-VARIANTS := circular keypad-dual keypad-single columnar-dual
+VARIANTS := circular keypad-dual keypad-single columnar-dual round
 DIST := $(addprefix dist/,$(addsuffix .html,$(VARIANTS)))
 
 TEMPLATE_vertical := variants/shared/templates/base-vertical.html
@@ -45,6 +45,12 @@ BASE_columnar-dual := vertical
 HEAD_columnar-dual := variants/columnar-dual/head.html
 BODY_columnar-dual := variants/columnar-dual/body.html
 
+ENTRY_round := src/variants/round/index.js
+TITLE_round := Fast Calculator — DOM (Round Dial + Swipe)
+BASE_round := vertical
+HEAD_round := variants/round/head.html
+BODY_round := variants/round/body.html
+
 .PHONY: all clean
 
 all: $(DIST)
@@ -62,7 +68,7 @@ dist/$(1).html: $$(ENTRY_$(1)) $$(HEAD_$(1)) $$(BODY_$(1)) $$(COMMON_TEMPLATES) 
 	  --minify=false \
 	  --format=esm \
 	  --platform=browser \
-	  --target=es2019 \
+	  --target=es2020 \
 	  --legal-comments=none \
 	  --log-level=warning \
 	  --define:__INCLUDE_TESTS__=$(INCLUDE_TESTS) \
