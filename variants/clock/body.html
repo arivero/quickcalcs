@@ -1,0 +1,61 @@
+  <main>
+    <header>
+      <button type="button" data-toggle-clock>Hide clock</button>
+      <select data-op-select aria-label="Select operation">
+        <option value="+">A + B</option>
+        <option value="×" selected>A × B</option>
+        <option value="−">A − B</option>
+        <option value=":">A : B</option>
+      </select>
+    </header>
+
+    <section class="clock-shell">
+      <div class="clock-face" data-clock-face>
+        <div class="hand hour" data-clock-hour></div>
+        <div class="hand minute" data-clock-minute></div>
+        <div class="clock-center"></div>
+        <div class="expression">
+          <div class="equation">
+            <span data-expr-a>A</span>
+            <span data-expr-op>×</span>
+            <span data-expr-b>B</span>
+          </div>
+          <div class="result" data-result>0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="fields">
+      <button type="button" data-field="A" aria-label="Toggle lock for A">
+        <span>Operand A</span>
+        <span class="value" data-field-value="A">0</span>
+      </button>
+      <button type="button" data-field="B" aria-label="Toggle lock for B">
+        <span>Operand B</span>
+        <span class="value" data-field-value="B">0</span>
+      </button>
+    </section>
+
+    <section class="dial" data-dial>
+      <div class="dial__pad" data-pad>
+        <button type="button" data-action="dot" data-ring-pos style="--pos:0">·</button>
+        <button type="button" data-digit="1" data-ring-pos style="--pos:1">1</button>
+        <button type="button" data-digit="2" data-ring-pos style="--pos:2">2</button>
+        <button type="button" data-digit="3" data-ring-pos style="--pos:3">3</button>
+        <button type="button" data-digit="4" data-ring-pos style="--pos:4">4</button>
+        <button type="button" data-digit="5" data-ring-pos style="--pos:5">5</button>
+        <button type="button" data-digit="6" data-ring-pos style="--pos:6">6</button>
+        <button type="button" data-digit="7" data-ring-pos style="--pos:7">7</button>
+        <button type="button" data-digit="8" data-ring-pos style="--pos:8">8</button>
+        <button type="button" data-digit="9" data-ring-pos style="--pos:9">9</button>
+        <button type="button" data-digit="0" data-ring-pos style="--pos:10">0</button>
+        <button type="button" data-action="sign" data-ring-pos style="--pos:11">±</button>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button type="button" data-action="clear">CE</button>
+      <button type="button" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button type="button" data-action="reset">Reset</button>
+    </section>
+  </main>

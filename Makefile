@@ -6,7 +6,7 @@ ESBUILD ?= $(shell if command -v esbuild >/dev/null 2>&1; then command -v esbuil
 ROOT := $(CURDIR)
 TMP := $(ROOT)/.tmp
 
-VARIANTS := circular keypad-dual keypad-single columnar-dual round
+VARIANTS := circular keypad-dual keypad-single columnar-dual round clock
 DIST := $(addprefix dist/,$(addsuffix .html,$(VARIANTS)))
 
 TEMPLATE_vertical := variants/shared/templates/base-vertical.html
@@ -50,6 +50,12 @@ TITLE_round := Fast Calculator — DOM (Round Dial + Swipe)
 BASE_round := vertical
 HEAD_round := variants/round/head.html
 BODY_round := variants/round/body.html
+
+ENTRY_clock := src/variants/clock/index.js
+TITLE_clock := Clock Calculator — Inline Dial
+BASE_clock := vertical
+HEAD_clock := variants/clock/head.html
+BODY_clock := variants/clock/body.html
 
 .PHONY: all clean
 

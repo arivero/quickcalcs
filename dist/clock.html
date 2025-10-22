@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <title>Clock Calculator — Inline Dial</title>
+  <meta name="theme-color" content="#06101f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Fast Calc" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="manifest" href="/quickcalcs/manifest.webmanifest" />
+  <style>
+    :root { color-scheme: dark; }
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; }
+    body {
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+    }
+  </style>
+  <style>
+    :root {
+      --bg: #050b16;
+      --surface: rgba(10, 18, 32, 0.92);
+      --ink: #f1f5ff;
+      --muted: rgba(241, 245, 255, 0.68);
+      --accent: #7ac3ff;
+      --accent-soft: rgba(122, 195, 255, 0.2);
+      --warn: #f7b955;
+    }
+    body {
+      margin: 0;
+      background: radial-gradient(1200px 800px at 50% -8%, #0f1c33, var(--bg));
+      color: var(--ink);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: clamp(12px, 4vw, 24px);
+    }
+    main {
+      width: min(420px, 100%);
+      display: grid;
+      gap: 16px;
+      background: var(--surface);
+      border-radius: 20px;
+      padding: clamp(12px, 4vw, 20px);
+      box-shadow: 0 18px 48px rgba(5, 12, 24, 0.4);
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+    header select {
+      appearance: none;
+      background: rgba(12, 20, 36, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      border-radius: 10px;
+      color: var(--ink);
+      padding: 8px 26px 8px 12px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    header button {
+      background: rgba(12, 20, 36, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 600;
+      border-radius: 10px;
+      padding: 8px 14px;
+      cursor: pointer;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    header button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    .clock-shell {
+      position: relative;
+      display: grid;
+      justify-items: center;
+    }
+    .clock-face {
+      position: relative;
+      width: min(320px, 80vw);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: radial-gradient(circle at 50% 55%, rgba(13, 21, 38, 0.95), rgba(6, 11, 22, 0.96));
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: grid;
+      place-items: center;
+      padding: 18px;
+      box-shadow: inset 0 20px 30px rgba(5, 10, 18, 0.45);
+      transition: opacity 0.2s ease;
+    }
+    .clock-face.is-hidden {
+      opacity: 0.2;
+    }
+    .clock-face::after {
+      content: "";
+      position: absolute;
+      inset: 14px;
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      border-radius: 50%;
+    }
+    .hand {
+      position: absolute;
+      bottom: 50%;
+      left: 50%;
+      transform-origin: bottom center;
+      transform: translateX(-50%) rotate(0deg);
+      background: var(--accent);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(122, 195, 255, 0.3);
+    }
+    .hand.hour {
+      width: 6px;
+      height: 28%;
+    }
+    .hand.minute {
+      width: 4px;
+      height: 40%;
+      background: #fff;
+      box-shadow: 0 4px 12px rgba(255, 255, 255, 0.25);
+    }
+    .clock-center {
+      position: absolute;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 0 4px rgba(122, 195, 255, 0.25);
+    }
+    .expression {
+      position: absolute;
+      inset: 24px 22px 26px;
+      display: grid;
+      gap: 6px;
+      place-items: center;
+      text-align: center;
+      color: var(--muted);
+      font-size: 10px;
+      letter-spacing: 0.3px;
+    }
+    .expression .equation {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .expression .equation span {
+      min-width: 0;
+      max-width: 72px;
+      word-break: break-word;
+    }
+    .expression .equation .is-active {
+      color: #fff;
+    }
+    .expression .result {
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+      word-break: break-word;
+      max-width: 120px;
+    }
+    .fields {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .fields button {
+      flex: 1;
+      background: rgba(12, 20, 36, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--ink);
+      font-size: 12px;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      display: grid;
+      gap: 4px;
+      transition: border 0.15s ease, box-shadow 0.15s ease;
+    }
+    .fields button .value {
+      font-size: 16px;
+      font-weight: 600;
+      word-break: break-word;
+      min-height: 1.2em;
+    }
+    .fields button.is-active {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(122, 195, 255, 0.3);
+    }
+    .fields button.is-locked {
+      border-color: var(--warn);
+      box-shadow: 0 0 0 1px rgba(247, 185, 85, 0.32);
+    }
+    .dial {
+      position: relative;
+      width: min(320px, 80vw);
+      aspect-ratio: 1;
+      margin: 0 auto;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at 50% 50%, rgba(17, 28, 48, 0.96), rgba(8, 12, 22, 0.94));
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      touch-action: none;
+      user-select: none;
+    }
+    .dial__pad {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+    .dial__pad button {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(calc((360deg / var(--count)) * var(--pos) - 90deg)) translate(var(--ring-radius)) rotate(calc(-1 * ((360deg / var(--count)) * var(--pos) - 90deg)));
+      --count: 12;
+      --ring-radius: clamp(90px, 26vw, 140px);
+      width: clamp(42px, 11vw, 58px);
+      height: clamp(42px, 11vw, 58px);
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(11, 19, 33, 0.92);
+      color: var(--ink);
+      font-size: clamp(16px, 4vw, 22px);
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
+    }
+    .dial__pad button.is-hot {
+      transform: translate(-50%, -50%) rotate(calc((360deg / var(--count)) * var(--pos) - 90deg)) translate(var(--ring-radius)) rotate(calc(-1 * ((360deg / var(--count)) * var(--pos) - 90deg))) scale(1.08);
+      border-color: var(--accent);
+    }
+    .actions {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+    }
+    .actions button {
+      flex: 1 1 120px;
+      padding: 10px 12px;
+      font-size: 13px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(12, 20, 36, 0.92);
+      color: var(--ink);
+      font-weight: 600;
+      cursor: pointer;
+      transition: border 0.15s ease, transform 0.15s ease;
+    }
+    .actions button:hover {
+      border-color: var(--accent);
+      transform: translateY(-1px);
+    }
+    @media (max-width: 420px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      header button,
+      header select {
+        width: 100%;
+      }
+      .fields {
+        flex-direction: column;
+      }
+      .fields button {
+        width: 100%;
+      }
+    }
+  </style>
+
+</head>
+<body class="layout-vertical">
+  <main>
+    <header>
+      <button type="button" data-toggle-clock>Hide clock</button>
+      <select data-op-select aria-label="Select operation">
+        <option value="+">A + B</option>
+        <option value="×" selected>A × B</option>
+        <option value="−">A − B</option>
+        <option value=":">A : B</option>
+      </select>
+    </header>
+
+    <section class="clock-shell">
+      <div class="clock-face" data-clock-face>
+        <div class="hand hour" data-clock-hour></div>
+        <div class="hand minute" data-clock-minute></div>
+        <div class="clock-center"></div>
+        <div class="expression">
+          <div class="equation">
+            <span data-expr-a>A</span>
+            <span data-expr-op>×</span>
+            <span data-expr-b>B</span>
+          </div>
+          <div class="result" data-result>0</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="fields">
+      <button type="button" data-field="A" aria-label="Toggle lock for A">
+        <span>Operand A</span>
+        <span class="value" data-field-value="A">0</span>
+      </button>
+      <button type="button" data-field="B" aria-label="Toggle lock for B">
+        <span>Operand B</span>
+        <span class="value" data-field-value="B">0</span>
+      </button>
+    </section>
+
+    <section class="dial" data-dial>
+      <div class="dial__pad" data-pad>
+        <button type="button" data-action="dot" data-ring-pos style="--pos:0">·</button>
+        <button type="button" data-digit="1" data-ring-pos style="--pos:1">1</button>
+        <button type="button" data-digit="2" data-ring-pos style="--pos:2">2</button>
+        <button type="button" data-digit="3" data-ring-pos style="--pos:3">3</button>
+        <button type="button" data-digit="4" data-ring-pos style="--pos:4">4</button>
+        <button type="button" data-digit="5" data-ring-pos style="--pos:5">5</button>
+        <button type="button" data-digit="6" data-ring-pos style="--pos:6">6</button>
+        <button type="button" data-digit="7" data-ring-pos style="--pos:7">7</button>
+        <button type="button" data-digit="8" data-ring-pos style="--pos:8">8</button>
+        <button type="button" data-digit="9" data-ring-pos style="--pos:9">9</button>
+        <button type="button" data-digit="0" data-ring-pos style="--pos:10">0</button>
+        <button type="button" data-action="sign" data-ring-pos style="--pos:11">±</button>
+      </div>
+    </section>
+
+    <section class="actions">
+      <button type="button" data-action="clear">CE</button>
+      <button type="button" data-action="backspace" aria-label="Backspace">⌫</button>
+      <button type="button" data-action="reset">Reset</button>
+    </section>
+  </main>
+
+  <script type="module">
+  // src/variants/shared/precision.js
+var buffer = new ArrayBuffer(8);
+var view = new DataView(buffer);
+var MASK_52 = (1n << 52n) - 1n;
+var ROUND_GUARD = 0xfn;
+var KEEP_MASK = (1n << 48n) - 1n;
+function toBigInt(value) {
+  view.setFloat64(0, value, false);
+  const hi = BigInt(view.getUint32(0, false));
+  const lo = BigInt(view.getUint32(4, false));
+  return hi << 32n | lo;
+}
+function fromBigInt(bits) {
+  const hi = Number(bits >> 32n & 0xffffffffn);
+  const lo = Number(bits & 0xffffffffn);
+  view.setUint32(0, hi, false);
+  view.setUint32(4, lo, false);
+  return view.getFloat64(0, false);
+}
+function roundTo48Bits(value) {
+  if (!Number.isFinite(value)) return value;
+  let bits = toBigInt(value);
+  const sign = bits >> 63n;
+  let exponent = bits >> 52n & 0x7ffn;
+  let mantissa = bits & MASK_52;
+  if (exponent === 0x7ffn || exponent === 0n) {
+    return value;
+  }
+  const keep = mantissa >> 4n;
+  const discarded = mantissa & ROUND_GUARD;
+  let rounded = keep;
+  const HALF = 0x8n;
+  if (discarded > HALF || discarded === HALF && (keep & 1n) === 1n) {
+    rounded = keep + 1n;
+    if (rounded >> 48n) {
+      rounded &= KEEP_MASK;
+      exponent += 1n;
+      if (exponent >= 0x7ffn) {
+        return sign === 0n ? Infinity : -Infinity;
+      }
+    }
+  }
+  mantissa = rounded << 4n & MASK_52;
+  bits = sign << 63n | exponent << 52n | mantissa;
+  return fromBigInt(bits);
+}
+function formatRounded(value) {
+  const rounded = roundTo48Bits(value);
+  if (!Number.isFinite(rounded)) {
+    return "\u2014";
+  }
+  const abs = Math.abs(rounded);
+  let text;
+  if (abs >= 1e12 || abs > 0 && abs < 1e-6) {
+    text = rounded.toPrecision(12);
+  } else {
+    text = rounded.toFixed(12);
+  }
+  if (text.includes("e") || text.includes("E")) {
+    return text;
+  }
+  if (text.includes(".")) {
+    while (text.endsWith("0")) text = text.slice(0, -1);
+    if (text.endsWith(".")) text = text.slice(0, -1);
+  }
+  if (text === "-0") return "0";
+  return text;
+}
+function evaluateBinaryOperation(op, A, B) {
+  if (!Number.isFinite(A) || !Number.isFinite(B)) {
+    return { value: NaN, text: "\u2014" };
+  }
+  let result;
+  switch (op) {
+    case "+":
+      result = A + B;
+      break;
+    case "\u2212":
+      result = A - B;
+      break;
+    case "\xD7":
+      result = A * B;
+      break;
+    case ":":
+      if (B === 0) {
+        return { value: NaN, text: "\u2014" };
+      }
+      result = A / B;
+      break;
+    default:
+      return { value: NaN, text: "\u2014" };
+  }
+  if (!Number.isFinite(result)) {
+    return { value: NaN, text: "\u2014" };
+  }
+  const rounded = roundTo48Bits(result);
+  return { value: rounded, text: formatRounded(rounded) };
+}
+
+// src/variants/shared/digits.js
+function normalizeZeros(s) {
+  if (s === "" || s === "-" || s === "." || s === "-.") return s;
+  const neg = s.startsWith("-");
+  let t = neg ? s.slice(1) : s;
+  if (t.startsWith("0") && t !== "0" && !t.startsWith("0.")) {
+    t = t.replace(/^0+/, "");
+    if (t === "") t = "0";
+  }
+  return neg ? "-" + t : t;
+}
+function appendDigitStr(s, digit) {
+  let t = s;
+  if (t === "-") t = "-0";
+  if (t === "") t = "0";
+  t += digit;
+  return normalizeZeros(t);
+}
+function appendDotStr(s) {
+  let t = s;
+  if (t === "" || t === "-") t += "0";
+  if (!t.includes(".")) t += ".";
+  return t;
+}
+function toggleSignStr(s) {
+  if (s.startsWith("-")) return s.slice(1);
+  return "-" + (s || "");
+}
+
+// src/variants/shared/ops.js
+var OPS = ["+", "\xD7", "\u2212", ":"];
+
+// src/variants/shared/lockManager.js
+var OPERANDS = ["A", "B"];
+function otherOperand(which) {
+  return which === "A" ? "B" : "A";
+}
+function createLockManager(initialTarget = "A") {
+  let active = OPERANDS.includes(initialTarget) ? initialTarget : "A";
+  let locked = null;
+  function getActive() {
+    return active;
+  }
+  function getLocked() {
+    return locked;
+  }
+  function enforce() {
+    if (locked && active === locked) {
+      active = otherOperand(locked);
+    }
+    return active;
+  }
+  function setActive(next) {
+    if (!OPERANDS.includes(next)) return active;
+    active = next;
+    enforce();
+    return active;
+  }
+  function toggleLock2(operand) {
+    if (!OPERANDS.includes(operand)) return { active, locked };
+    if (locked === operand) {
+      locked = null;
+    } else {
+      locked = operand;
+      active = otherOperand(operand);
+    }
+    enforce();
+    return { active, locked };
+  }
+  function lockTo(operand) {
+    if (!OPERANDS.includes(operand)) return { active, locked };
+    locked = operand;
+    active = otherOperand(operand);
+    enforce();
+    return { active, locked };
+  }
+  function clearLock() {
+    locked = null;
+    return active;
+  }
+  function reset(target = "A") {
+    locked = null;
+    active = OPERANDS.includes(target) ? target : "A";
+    return active;
+  }
+  function isLocked(operand) {
+    return locked === operand;
+  }
+  return {
+    getActive,
+    getLocked,
+    setActive,
+    toggleLock: toggleLock2,
+    lockTo,
+    clearLock,
+    reset,
+    enforce,
+    isLocked
+  };
+}
+
+// src/variants/clock/index.js
+var state = {
+  a: "0",
+  b: "0",
+  opIndex: 1
+};
+var lock = createLockManager("A");
+var els = {
+  fields: {
+    A: document.querySelector('[data-field="A"]'),
+    B: document.querySelector('[data-field="B"]')
+  },
+  values: {
+    A: document.querySelector('[data-field-value="A"]'),
+    B: document.querySelector('[data-field-value="B"]')
+  },
+  expr: {
+    A: document.querySelector("[data-expr-a]"),
+    B: document.querySelector("[data-expr-b]"),
+    op: document.querySelector("[data-expr-op]")
+  },
+  result: document.querySelector("[data-result]"),
+  dial: document.querySelector("[data-dial]"),
+  toggleClock: document.querySelector("[data-toggle-clock]"),
+  clockFace: document.querySelector("[data-clock-face]"),
+  hands: {
+    hour: document.querySelector("[data-clock-hour]"),
+    minute: document.querySelector("[data-clock-minute]")
+  },
+  opSelect: document.querySelector("[data-op-select]"),
+  actions: {
+    clear: document.querySelector('[data-action="clear"]'),
+    backspace: document.querySelector('[data-action="backspace"]'),
+    reset: document.querySelector('[data-action="reset"]')
+  }
+};
+var swiping = false;
+var lastHot = null;
+var flipArmed = false;
+var clockVisible = true;
+function currentStr() {
+  return lock.getActive() === "A" ? state.a : state.b;
+}
+function setCurrentStr(value) {
+  if (lock.getActive() === "A") state.a = value;
+  else state.b = value;
+}
+function toNum(str) {
+  if (str === "" || str === "-" || str === "." || str === "-.") return 0;
+  return Number(str);
+}
+function render() {
+  lock.enforce();
+  const op = OPS[state.opIndex];
+  els.values.A.textContent = state.a;
+  els.values.B.textContent = state.b;
+  els.expr.A.textContent = state.a;
+  els.expr.B.textContent = state.b;
+  els.expr.op.textContent = op;
+  els.opSelect.value = op;
+  const { text } = evaluateBinaryOperation(op, toNum(state.a), toNum(state.b));
+  els.result.textContent = text;
+  const active = lock.getActive();
+  els.fields.A.classList.toggle("is-active", active === "A");
+  els.fields.B.classList.toggle("is-active", active === "B");
+  els.fields.A.classList.toggle("is-locked", lock.isLocked("A"));
+  els.fields.B.classList.toggle("is-locked", lock.isLocked("B"));
+  els.expr.A.classList.toggle("is-active", active === "A");
+  els.expr.B.classList.toggle("is-active", active === "B");
+  els.clockFace.classList.toggle("is-hidden", !clockVisible);
+  els.toggleClock.textContent = clockVisible ? "Hide clock" : "Show clock";
+}
+function appendDigit(digit) {
+  let value = currentStr();
+  if (value === "0") value = "";
+  if (value === "-0") value = "-";
+  setCurrentStr(appendDigitStr(value, digit));
+  render();
+}
+function appendDot() {
+  const value = currentStr();
+  const next = appendDotStr(value);
+  if (next !== value) {
+    setCurrentStr(next);
+    render();
+  }
+}
+function toggleSign() {
+  const value = currentStr();
+  setCurrentStr(toggleSignStr(value));
+  render();
+}
+function backspace() {
+  const value = currentStr();
+  if (value.length <= 1 || value.length === 2 && value.startsWith("-") && !value.includes(".")) {
+    setCurrentStr("0");
+  } else {
+    setCurrentStr(value.slice(0, -1));
+  }
+  flipArmed = false;
+  render();
+}
+function clearOne() {
+  setCurrentStr("0");
+  flipArmed = false;
+  render();
+}
+function resetAll() {
+  state.a = "0";
+  state.b = "0";
+  lock.reset("A");
+  state.opIndex = OPS.indexOf("\xD7") >= 0 ? OPS.indexOf("\xD7") : 0;
+  flipArmed = false;
+  render();
+}
+function toggleLock(which) {
+  if (which !== "A" && which !== "B") return;
+  lock.toggleLock(which);
+  if (lock.getLocked()) {
+    flipArmed = false;
+  }
+  render();
+}
+function buttonFromPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+  return el.closest("[data-ring-pos]");
+}
+function setHot(button) {
+  if (lastHot === button) return;
+  if (lastHot) lastHot.classList.remove("is-hot");
+  if (button) button.classList.add("is-hot");
+  lastHot = button;
+}
+function handleKey(btn) {
+  if (!btn) return;
+  const { digit, action } = btn.dataset;
+  if (digit) {
+    appendDigit(digit);
+  } else if (action === "dot") {
+    appendDot();
+  } else if (action === "sign") {
+    toggleSign();
+  }
+}
+function onDialPointerDown(ev) {
+  if (ev.pointerType === "mouse" && ev.button !== 0) return;
+  ev.preventDefault();
+  const startBtn = buttonFromPoint(ev.clientX, ev.clientY);
+  if (startBtn) {
+    if (lock.getLocked()) {
+      const other = lock.getLocked() === "A" ? "B" : "A";
+      if (lock.getActive() !== other) lock.setActive(other);
+      setCurrentStr("0");
+    } else if (flipArmed) {
+      const nextTarget = lock.getActive() === "A" ? "B" : "A";
+      lock.setActive(nextTarget);
+      setCurrentStr("0");
+    }
+    handleKey(startBtn);
+    setHot(startBtn);
+  } else {
+    setHot(null);
+  }
+  swiping = true;
+  try {
+    ev.target.setPointerCapture(ev.pointerId);
+  } catch {
+  }
+  flipArmed = true;
+}
+function onDialPointerMove(ev) {
+  if (!swiping) return;
+  const btn = buttonFromPoint(ev.clientX, ev.clientY);
+  if (btn) {
+    if (btn !== lastHot) {
+      handleKey(btn);
+      setHot(btn);
+    }
+  } else {
+    setHot(null);
+  }
+}
+function onDialPointerUp() {
+  if (!swiping) return;
+  swiping = false;
+  setHot(null);
+}
+function updateClock() {
+  const now = /* @__PURE__ */ new Date();
+  const minutes = now.getMinutes() + now.getSeconds() / 60;
+  const hours = now.getHours() % 12 + minutes / 60;
+  if (els.hands.minute) {
+    els.hands.minute.style.transform = `translateX(-50%) rotate(${minutes * 6}deg)`;
+  }
+  if (els.hands.hour) {
+    els.hands.hour.style.transform = `translateX(-50%) rotate(${hours * 30}deg)`;
+  }
+}
+els.fields.A?.addEventListener("click", () => toggleLock("A"));
+els.fields.B?.addEventListener("click", () => toggleLock("B"));
+els.actions.clear?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  clearOne();
+});
+els.actions.backspace?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  backspace();
+});
+els.actions.reset?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  resetAll();
+});
+els.opSelect?.addEventListener("change", (ev) => {
+  const value = ev.target.value;
+  const idx = OPS.indexOf(value);
+  if (idx !== -1) {
+    state.opIndex = idx;
+    render();
+  }
+});
+els.toggleClock?.addEventListener("click", (ev) => {
+  ev.preventDefault();
+  clockVisible = !clockVisible;
+  render();
+});
+els.dial?.addEventListener("pointerdown", onDialPointerDown);
+els.dial?.addEventListener("pointermove", onDialPointerMove);
+window.addEventListener("pointerup", onDialPointerUp);
+render();
+updateClock();
+setInterval(updateClock, 1e3);
+  </script>
+</body>
+</html>

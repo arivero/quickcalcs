@@ -46,6 +46,8 @@ The compiled calculators land in `dist/`:
 * `dist/keypad-dual.html` – Dual keypad calculator with side-by-side pads dedicated to each operand (landscape template).
 * `dist/keypad-single.html` – Classic keypad with a toggle to route digits to the left or right operand.
 * `dist/columnar-dual.html` – Vertical column calculator with stacked digits per operand.
+* `dist/round.html` – DOM-based swipe dial with lockable operands and swipe entry.
+* `dist/clock.html` – Compact clock-themed dial with inline expression, suitable for iframe embeds.
 
 To expose the fresh builds under `docs/` (for GitHub Pages deployment), run the optional helper target after `make`:
 
