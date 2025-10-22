@@ -4,6 +4,13 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
   <title>Classic Keypad Calculator</title>
+  <meta name="theme-color" content="#06101f" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Fast Calc" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+  <link rel="manifest" href="/quickcalcs/manifest.webmanifest" />
   <style>
     :root { color-scheme: dark; }
     *, *::before, *::after { box-sizing: border-box; }
@@ -450,6 +457,75 @@ function toggleSignStr(s) {
   return "-" + (s || "");
 }
 
+// src/variants/shared/lockManager.js
+var OPERANDS = ["A", "B"];
+function otherOperand(which) {
+  return which === "A" ? "B" : "A";
+}
+function createLockManager(initialTarget = "A") {
+  let active = OPERANDS.includes(initialTarget) ? initialTarget : "A";
+  let locked = null;
+  function getActive() {
+    return active;
+  }
+  function getLocked() {
+    return locked;
+  }
+  function enforce() {
+    if (locked && active === locked) {
+      active = otherOperand(locked);
+    }
+    return active;
+  }
+  function setActive(next) {
+    if (!OPERANDS.includes(next)) return active;
+    active = next;
+    enforce();
+    return active;
+  }
+  function toggleLock(operand) {
+    if (!OPERANDS.includes(operand)) return { active, locked };
+    if (locked === operand) {
+      locked = null;
+    } else {
+      locked = operand;
+      active = otherOperand(operand);
+    }
+    enforce();
+    return { active, locked };
+  }
+  function lockTo(operand) {
+    if (!OPERANDS.includes(operand)) return { active, locked };
+    locked = operand;
+    active = otherOperand(operand);
+    enforce();
+    return { active, locked };
+  }
+  function clearLock() {
+    locked = null;
+    return active;
+  }
+  function reset(target = "A") {
+    locked = null;
+    active = OPERANDS.includes(target) ? target : "A";
+    return active;
+  }
+  function isLocked(operand) {
+    return locked === operand;
+  }
+  return {
+    getActive,
+    getLocked,
+    setActive,
+    toggleLock,
+    lockTo,
+    clearLock,
+    reset,
+    enforce,
+    isLocked
+  };
+}
+
 // src/variants/shared/mountDualOperandCalculator.js
 function mountDualOperandCalculator(options = {}) {
   const {
@@ -497,9 +573,9 @@ function mountDualOperandCalculator(options = {}) {
   let aStr = "";
   let bStr = "";
   let op = operations[2] ?? "\xD7";
-  let lastActive = "A";
+  const lock2 = createLockManager("A");
   const pendingClear = { A: false, B: false };
-  const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive }) : ({ pad }) => pad.getAttribute("data-pad");
+  const determinePadTarget = typeof resolvePadTarget === "function" ? (ctx) => resolvePadTarget({ ...ctx, lastActive: lock2.getActive() }) : ({ pad }) => pad.getAttribute("data-pad");
   function displayValue(s) {
     if (s === "") return "0";
     return s;
@@ -534,13 +610,14 @@ function mountDualOperandCalculator(options = {}) {
     if (operationValue) {
       operationValue.textContent = op;
     }
+    const active = lock2.getActive();
     if (expressionValues.A) {
       expressionValues.A.textContent = displayValue(aStr);
-      expressionValues.A.classList.toggle("is-active", lastActive === "A");
+      expressionValues.A.classList.toggle("is-active", active === "A");
     }
     if (expressionValues.B) {
       expressionValues.B.textContent = displayValue(bStr);
-      expressionValues.B.classList.toggle("is-active", lastActive === "B");
+      expressionValues.B.classList.toggle("is-active", active === "B");
     }
     if (expressionValues.op) {
       expressionValues.op.textContent = op;
@@ -548,14 +625,15 @@ function mountDualOperandCalculator(options = {}) {
     opButtons.forEach((btn) => {
       btn.classList.toggle("is-active", btn.dataset.op === op);
     });
-    fieldCards2.A?.classList.toggle("is-active", lastActive === "A");
-    fieldCards2.B?.classList.toggle("is-active", lastActive === "B");
-    expressionPieces.A?.classList.toggle("is-active", lastActive === "A");
-    expressionPieces.B?.classList.toggle("is-active", lastActive === "B");
+    fieldCards2.A?.classList.toggle("is-active", active === "A");
+    fieldCards2.B?.classList.toggle("is-active", active === "B");
+    expressionPieces.A?.classList.toggle("is-active", active === "A");
+    expressionPieces.B?.classList.toggle("is-active", active === "B");
   }
   function handlePadButton(target, btn) {
     if (!target) return;
-    if (target !== lastActive) {
+    const currentActive = lock2.getActive();
+    if (target !== currentActive) {
       pendingClear[target] = true;
     }
     if (pendingClear[target]) {
@@ -583,7 +661,7 @@ function mountDualOperandCalculator(options = {}) {
           break;
       }
     }
-    lastActive = target;
+    lock2.setActive(target);
     refresh();
   }
   document.querySelectorAll(selectors.padRoot).forEach((pad) => {
@@ -609,7 +687,7 @@ function mountDualOperandCalculator(options = {}) {
     ev.preventDefault();
     aStr = "";
     bStr = "";
-    lastActive = "A";
+    lock2.reset("A");
     pendingClear.A = false;
     pendingClear.B = false;
     refresh();
@@ -619,7 +697,8 @@ function mountDualOperandCalculator(options = {}) {
     const tmp = aStr;
     aStr = bStr;
     bStr = tmp;
-    lastActive = lastActive === "A" ? "B" : "A";
+    const nextActive = lock2.getActive() === "A" ? "B" : "A";
+    lock2.setActive(nextActive);
     pendingClear.A = false;
     pendingClear.B = false;
     refresh();
@@ -627,21 +706,21 @@ function mountDualOperandCalculator(options = {}) {
   refresh();
   return {
     getActiveOperand() {
-      return lastActive;
+      return lock2.getActive();
     },
     setActiveOperand(which) {
       if (which !== "A" && which !== "B") return;
-      if (which !== lastActive) {
+      if (which !== lock2.getActive()) {
         pendingClear[which] = true;
       }
-      lastActive = which;
+      lock2.setActive(which);
       refresh();
     }
   };
 }
 
 // src/variants/keypad-single/index.js
-var latchState = { target: "A" };
+var lock = createLockManager("A");
 var controller = mountDualOperandCalculator({
   selectors: {
     fieldValueA: '[data-field-value="A"]',
@@ -654,7 +733,7 @@ var controller = mountDualOperandCalculator({
     swapButton: '[data-action="swap-operands"]',
     padRoot: "[data-pad]"
   },
-  resolvePadTarget: () => latchState.target
+  resolvePadTarget: () => lock.getActive()
 });
 var toggleLockBtn = document.querySelector('[data-action="toggle-lock"]');
 var lockDisplays = Array.from(document.querySelectorAll("[data-lock-display]"));
@@ -666,7 +745,7 @@ function describeTarget(target) {
   return target === "A" ? "Left operand" : "Right operand";
 }
 function syncLockState() {
-  const { target } = latchState;
+  const target = lock.getActive();
   controller.setActiveOperand(target);
   toggleLockBtn?.setAttribute(
     "aria-label",
@@ -686,12 +765,14 @@ function syncLockState() {
 }
 function setLockTarget(next) {
   if (next !== "A" && next !== "B") return;
-  latchState.target = next;
+  lock.clearLock();
+  lock.setActive(next);
   syncLockState();
 }
 toggleLockBtn?.addEventListener("click", (ev) => {
   ev.preventDefault();
-  setLockTarget(latchState.target === "A" ? "B" : "A");
+  const current = lock.getActive();
+  setLockTarget(current === "A" ? "B" : "A");
 });
 fieldCards.forEach((card) => {
   card.addEventListener("click", () => {

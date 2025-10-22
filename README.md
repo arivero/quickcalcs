@@ -47,7 +47,13 @@ The compiled calculators land in `dist/`:
 * `dist/keypad-single.html` – Classic keypad with a toggle to route digits to the left or right operand.
 * `dist/columnar-dual.html` – Vertical column calculator with stacked digits per operand.
 
-and must be moved to docs to release it public
+To expose the fresh builds under `docs/` (for GitHub Pages deployment), run the optional helper target after `make`:
+
+```bash
+make publish-docs
+```
+
+This copies the generated `dist/*.html` files into `docs/` so they can reuse the shared icons, manifest, and service worker already checked in there.
 
 Each file is self-contained and ready for offline distribution.
 

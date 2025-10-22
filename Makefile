@@ -89,3 +89,8 @@ $(foreach V,$(VARIANTS),$(eval $(call BUILD_RULE,$(V))))
 
 clean:
 	rm -rf dist
+
+.PHONY: publish-docs
+publish-docs: all
+	@echo "Copying dist/*.html to docs/ (ensure docs assets like icons manifest exist)"
+	cp dist/*.html docs/

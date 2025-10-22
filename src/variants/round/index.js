@@ -1,16 +1,17 @@
 import { evaluateBinaryOperation } from '../shared/precision.js';
-import { appendDigitStr, appendDotStr, toggleSignStr, normalizeZeros } from '../shared/digits.js';
+import { appendDigitStr, appendDotStr, toggleSignStr } from '../shared/digits.js';
 import { OPS as SHARED_OPS } from '../shared/ops.js';
+import { createLockManager } from '../shared/lockManager.js';
 
 const OPS = SHARED_OPS;
 
 const state = {
   a: '0',
   b: '0',
-  target: 'A',
   opIndex: 1,
-  locked: null,
 };
+
+const lock = createLockManager('A');
 
 const els = {
   fields: {
@@ -43,18 +44,12 @@ let swiping = false;
 let lastHot = null;
 let flipArmed = false;
 
-function enforceTargetForLock() {
-  if (!state.locked) return;
-  const other = state.locked === 'A' ? 'B' : 'A';
-  if (state.target !== other) state.target = other;
-}
-
 function currentStr() {
-  return state.target === 'A' ? state.a : state.b;
+  return lock.getActive() === 'A' ? state.a : state.b;
 }
 
 function setCurrentStr(value) {
-  if (state.target === 'A') state.a = value;
+  if (lock.getActive() === 'A') state.a = value;
   else state.b = value;
 }
 
@@ -65,7 +60,7 @@ function toNum(str) {
 
 
 function render() {
-  enforceTargetForLock();
+  lock.enforce();
   const op = OPS[state.opIndex];
 
   els.values.A.textContent = state.a;
@@ -78,10 +73,10 @@ function render() {
   const { text } = evaluateBinaryOperation(op, toNum(state.a), toNum(state.b));
   els.result.textContent = text;
 
-  els.fields.A.classList.toggle('is-active', state.target === 'A');
-  els.fields.B.classList.toggle('is-active', state.target === 'B');
-  els.fields.A.classList.toggle('is-locked', state.locked === 'A');
-  els.fields.B.classList.toggle('is-locked', state.locked === 'B');
+  els.fields.A.classList.toggle('is-active', lock.getActive() === 'A');
+  els.fields.B.classList.toggle('is-active', lock.getActive() === 'B');
+  els.fields.A.classList.toggle('is-locked', lock.isLocked('A'));
+  els.fields.B.classList.toggle('is-locked', lock.isLocked('B'));
 
   els.opWheel.buttons.forEach((btn, idx) => {
     btn.classList.toggle('is-active', idx === state.opIndex);
@@ -128,17 +123,15 @@ function clearOne() {
 function resetAll() {
   state.a = '0';
   state.b = '0';
-  state.target = 'A';
-  state.locked = null;
+  lock.reset('A');
   flipArmed = false;
   render();
 }
 
 function toggleLock(which) {
   if (which !== 'A' && which !== 'B') return;
-  state.locked = state.locked === which ? null : which;
-  if (state.locked) {
-    state.target = state.locked === 'A' ? 'B' : 'A';
+  lock.toggleLock(which);
+  if (lock.getLocked()) {
     flipArmed = false;
   }
   render();
@@ -174,13 +167,13 @@ function onDialPointerDown(ev) {
   ev.preventDefault();
   const startBtn = buttonFromPoint(ev.clientX, ev.clientY);
   if (startBtn) {
-    if (state.locked) {
-      const other = state.locked === 'A' ? 'B' : 'A';
-      if (state.target !== other) state.target = other;
+    if (lock.getLocked()) {
+      const other = lock.getLocked() === 'A' ? 'B' : 'A';
+      if (lock.getActive() !== other) lock.setActive(other);
       setCurrentStr('0');
     } else if (flipArmed) {
-      const nextTarget = state.target === 'A' ? 'B' : 'A';
-      state.target = nextTarget;
+      const nextTarget = lock.getActive() === 'A' ? 'B' : 'A';
+      lock.setActive(nextTarget);
       setCurrentStr('0');
     }
     handleKey(startBtn);

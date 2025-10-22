@@ -1,5 +1,6 @@
 import { evaluateBinaryOperation } from './precision.js';
-import { appendDigitStr, appendDotStr, toggleSignStr, normalizeZeros } from './digits.js';
+import { appendDigitStr, appendDotStr, toggleSignStr } from './digits.js';
+import { createLockManager } from './lockManager.js';
 
 export function mountDualOperandCalculator(options = {}) {
   const {
@@ -52,12 +53,12 @@ export function mountDualOperandCalculator(options = {}) {
   let aStr = '';
   let bStr = '';
   let op = operations[2] ?? '×';
-  let lastActive = 'A';
+  const lock = createLockManager('A');
   const pendingClear = { A: false, B: false };
 
   const determinePadTarget =
     typeof resolvePadTarget === 'function'
-      ? (ctx) => resolvePadTarget({ ...ctx, lastActive })
+      ? (ctx) => resolvePadTarget({ ...ctx, lastActive: lock.getActive() })
       : ({ pad }) => pad.getAttribute('data-pad');
 
   function displayValue(s) {
@@ -101,13 +102,14 @@ export function mountDualOperandCalculator(options = {}) {
     if (operationValue) {
       operationValue.textContent = op;
     }
+    const active = lock.getActive();
     if (expressionValues.A) {
       expressionValues.A.textContent = displayValue(aStr);
-      expressionValues.A.classList.toggle('is-active', lastActive === 'A');
+      expressionValues.A.classList.toggle('is-active', active === 'A');
     }
     if (expressionValues.B) {
       expressionValues.B.textContent = displayValue(bStr);
-      expressionValues.B.classList.toggle('is-active', lastActive === 'B');
+      expressionValues.B.classList.toggle('is-active', active === 'B');
     }
     if (expressionValues.op) {
       expressionValues.op.textContent = op;
@@ -115,15 +117,16 @@ export function mountDualOperandCalculator(options = {}) {
     opButtons.forEach((btn) => {
       btn.classList.toggle('is-active', btn.dataset.op === op);
     });
-    fieldCards.A?.classList.toggle('is-active', lastActive === 'A');
-    fieldCards.B?.classList.toggle('is-active', lastActive === 'B');
-    expressionPieces.A?.classList.toggle('is-active', lastActive === 'A');
-    expressionPieces.B?.classList.toggle('is-active', lastActive === 'B');
+    fieldCards.A?.classList.toggle('is-active', active === 'A');
+    fieldCards.B?.classList.toggle('is-active', active === 'B');
+    expressionPieces.A?.classList.toggle('is-active', active === 'A');
+    expressionPieces.B?.classList.toggle('is-active', active === 'B');
   }
 
   function handlePadButton(target, btn) {
     if (!target) return;
-    if (target !== lastActive) {
+    const currentActive = lock.getActive();
+    if (target !== currentActive) {
       pendingClear[target] = true;
     }
     if (pendingClear[target]) {
@@ -151,7 +154,7 @@ export function mountDualOperandCalculator(options = {}) {
           break;
       }
     }
-    lastActive = target;
+    lock.setActive(target);
     refresh();
   }
 
@@ -180,7 +183,7 @@ export function mountDualOperandCalculator(options = {}) {
     ev.preventDefault();
     aStr = '';
     bStr = '';
-    lastActive = 'A';
+    lock.reset('A');
     pendingClear.A = false;
     pendingClear.B = false;
     refresh();
@@ -191,7 +194,8 @@ export function mountDualOperandCalculator(options = {}) {
     const tmp = aStr;
     aStr = bStr;
     bStr = tmp;
-    lastActive = lastActive === 'A' ? 'B' : 'A';
+    const nextActive = lock.getActive() === 'A' ? 'B' : 'A';
+    lock.setActive(nextActive);
     pendingClear.A = false;
     pendingClear.B = false;
     refresh();
@@ -201,14 +205,14 @@ export function mountDualOperandCalculator(options = {}) {
 
   return {
     getActiveOperand() {
-      return lastActive;
+      return lock.getActive();
     },
     setActiveOperand(which) {
       if (which !== 'A' && which !== 'B') return;
-      if (which !== lastActive) {
+      if (which !== lock.getActive()) {
         pendingClear[which] = true;
       }
-      lastActive = which;
+      lock.setActive(which);
       refresh();
     },
   };

@@ -1,6 +1,7 @@
 import { mountDualOperandCalculator } from '../shared/mountDualOperandCalculator.js';
+import { createLockManager } from '../shared/lockManager.js';
 
-const latchState = { target: 'A' };
+const lock = createLockManager('A');
 
 const controller = mountDualOperandCalculator({
   selectors: {
@@ -14,7 +15,7 @@ const controller = mountDualOperandCalculator({
     swapButton: '[data-action="swap-operands"]',
     padRoot: '[data-pad]',
   },
-  resolvePadTarget: () => latchState.target,
+  resolvePadTarget: () => lock.getActive(),
 });
 
 const toggleLockBtn = document.querySelector('[data-action="toggle-lock"]');
@@ -29,7 +30,7 @@ function describeTarget(target) {
 }
 
 function syncLockState() {
-  const { target } = latchState;
+  const target = lock.getActive();
   controller.setActiveOperand(target);
   toggleLockBtn?.setAttribute(
     'aria-label',
@@ -50,13 +51,15 @@ function syncLockState() {
 
 function setLockTarget(next) {
   if (next !== 'A' && next !== 'B') return;
-  latchState.target = next;
+  lock.clearLock();
+  lock.setActive(next);
   syncLockState();
 }
 
 toggleLockBtn?.addEventListener('click', (ev) => {
   ev.preventDefault();
-  setLockTarget(latchState.target === 'A' ? 'B' : 'A');
+  const current = lock.getActive();
+  setLockTarget(current === 'A' ? 'B' : 'A');
 });
 
 fieldCards.forEach((card) => {
