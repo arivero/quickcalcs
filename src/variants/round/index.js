@@ -1,8 +1,8 @@
 import { evaluateBinaryOperation } from '../shared/precision.js';
+import { appendDigitStr, appendDotStr, toggleSignStr, normalizeZeros } from '../shared/digits.js';
+import { OPS as SHARED_OPS } from '../shared/ops.js';
 
-const SYMBOL_TIMES = '\u00d7';
-const SYMBOL_MINUS = '\u2212';
-const OPS = ['+', SYMBOL_TIMES, SYMBOL_MINUS, ':'];
+const OPS = SHARED_OPS;
 
 const state = {
   a: '0',
@@ -63,16 +63,6 @@ function toNum(str) {
   return Number(str);
 }
 
-function normZeros(str) {
-  if (str === '' || str === '-' || str === '.' || str === '-.') return str;
-  const neg = str.startsWith('-');
-  let trimmed = neg ? str.slice(1) : str;
-  if (trimmed.startsWith('0') && trimmed !== '0' && !trimmed.startsWith('0.')) {
-    trimmed = trimmed.replace(/^0+/, '');
-    if (trimmed === '') trimmed = '0';
-  }
-  return neg ? `-${trimmed}` : trimmed;
-}
 
 function render() {
   enforceTargetForLock();
@@ -102,23 +92,19 @@ function appendDigit(digit) {
   let value = currentStr();
   if (value === '0') value = '';
   if (value === '-0') value = '-';
-  setCurrentStr(normZeros(`${value}${digit}`));
+  setCurrentStr(appendDigitStr(value, digit));
   render();
 }
 
 function appendDot() {
   const value = currentStr();
-  if (!value.includes('.')) {
-    if (value === '' || value === '-') setCurrentStr(`${value}0.`);
-    else setCurrentStr(`${value}.`);
-    render();
-  }
+  const next = appendDotStr(value);
+  if (next !== value) { setCurrentStr(next); render(); }
 }
 
 function toggleSign() {
   const value = currentStr();
-  if (value.startsWith('-')) setCurrentStr(value.slice(1));
-  else setCurrentStr(`-${value}`);
+  setCurrentStr(toggleSignStr(value));
   render();
 }
 

@@ -390,10 +390,40 @@ function evaluateBinaryOperation(op, A, B) {
   return { value: rounded, text: formatRounded(rounded) };
 }
 
+// src/variants/shared/digits.js
+function normalizeZeros(s) {
+  if (s === "" || s === "-" || s === "." || s === "-.") return s;
+  const neg = s.startsWith("-");
+  let t = neg ? s.slice(1) : s;
+  if (t.startsWith("0") && t !== "0" && !t.startsWith("0.")) {
+    t = t.replace(/^0+/, "");
+    if (t === "") t = "0";
+  }
+  return neg ? "-" + t : t;
+}
+function appendDigitStr(s, digit) {
+  let t = s;
+  if (t === "-") t = "-0";
+  if (t === "") t = "0";
+  t += digit;
+  return normalizeZeros(t);
+}
+function appendDotStr(s) {
+  let t = s;
+  if (t === "" || t === "-") t += "0";
+  if (!t.includes(".")) t += ".";
+  return t;
+}
+function toggleSignStr(s) {
+  if (s.startsWith("-")) return s.slice(1);
+  return "-" + (s || "");
+}
+
+// src/variants/shared/ops.js
+var OPS = ["+", "\xD7", "\u2212", ":"];
+
 // src/variants/round/index.js
-var SYMBOL_TIMES = "\xD7";
-var SYMBOL_MINUS = "\u2212";
-var OPS = ["+", SYMBOL_TIMES, SYMBOL_MINUS, ":"];
+var OPS2 = OPS;
 var state = {
   a: "0",
   b: "0",
@@ -446,19 +476,9 @@ function toNum(str) {
   if (str === "" || str === "-" || str === "." || str === "-.") return 0;
   return Number(str);
 }
-function normZeros(str) {
-  if (str === "" || str === "-" || str === "." || str === "-.") return str;
-  const neg = str.startsWith("-");
-  let trimmed = neg ? str.slice(1) : str;
-  if (trimmed.startsWith("0") && trimmed !== "0" && !trimmed.startsWith("0.")) {
-    trimmed = trimmed.replace(/^0+/, "");
-    if (trimmed === "") trimmed = "0";
-  }
-  return neg ? `-${trimmed}` : trimmed;
-}
 function render() {
   enforceTargetForLock();
-  const op = OPS[state.opIndex];
+  const op = OPS2[state.opIndex];
   els.values.A.textContent = state.a;
   els.values.B.textContent = state.b;
   els.expr.A.textContent = state.a;
@@ -479,21 +499,20 @@ function appendDigit(digit) {
   let value = currentStr();
   if (value === "0") value = "";
   if (value === "-0") value = "-";
-  setCurrentStr(normZeros(`${value}${digit}`));
+  setCurrentStr(appendDigitStr(value, digit));
   render();
 }
 function appendDot() {
   const value = currentStr();
-  if (!value.includes(".")) {
-    if (value === "" || value === "-") setCurrentStr(`${value}0.`);
-    else setCurrentStr(`${value}.`);
+  const next = appendDotStr(value);
+  if (next !== value) {
+    setCurrentStr(next);
     render();
   }
 }
 function toggleSign() {
   const value = currentStr();
-  if (value.startsWith("-")) setCurrentStr(value.slice(1));
-  else setCurrentStr(`-${value}`);
+  setCurrentStr(toggleSignStr(value));
   render();
 }
 function backspace() {

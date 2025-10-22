@@ -1,0 +1,26 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: var(--actions-justify, center);
+  gap: var(--actions-gap, 12px);
+}
+
+.actions button {
+  flex: var(--actions-flex, 1 1 200px);
+  padding: var(--actions-padding, 14px 16px);
+  font-size: var(--actions-font-size, 15px);
+  border-radius: var(--actions-radius, 14px);
+  border: 1px solid var(--actions-border, rgba(255, 255, 255, 0.16));
+  background: var(--actions-bg, rgba(13, 19, 34, 0.9));
+  color: var(--actions-color, var(--ink));
+  cursor: pointer;
+  font-weight: var(--actions-font-weight, 600);
+  letter-spacing: var(--actions-letter-spacing, 0.2px);
+  transition: var(--actions-transition, border 0.15s ease, transform 0.15s ease);
+}
+
+.actions button:hover {
+  border-color: var(--actions-hover-border, var(--accent));
+  transform: translateY(-1px);
+}
+

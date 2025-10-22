@@ -1,4 +1,5 @@
 import { evaluateBinaryOperation } from './precision.js';
+import { appendDigitStr, appendDotStr, toggleSignStr, normalizeZeros } from './digits.js';
 
 export function mountDualOperandCalculator(options = {}) {
   const {
@@ -64,16 +65,6 @@ export function mountDualOperandCalculator(options = {}) {
     return s;
   }
 
-  function normalizeZeros(s) {
-    const neg = s.startsWith('-');
-    let t = neg ? s.slice(1) : s;
-    if (t.startsWith('0') && !t.startsWith('0.')) {
-      t = t.replace(/^0+(?=\d)/, '');
-      if (t === '') t = '0';
-    }
-    return neg ? '-' + t : t;
-  }
-
   function getOperand(which) {
     return which === 'A' ? aStr : bStr;
   }
@@ -84,25 +75,15 @@ export function mountDualOperandCalculator(options = {}) {
   }
 
   function appendDigit(which, digit) {
-    let s = getOperand(which);
-    if (s === '-') s = '-0';
-    if (s === '') s = '0';
-    s += digit;
-    setOperand(which, normalizeZeros(s));
+    setOperand(which, appendDigitStr(getOperand(which), digit));
   }
 
   function appendDot(which) {
-    let s = getOperand(which);
-    if (s === '' || s === '-') s += '0';
-    if (!s.includes('.')) s += '.';
-    setOperand(which, s);
+    setOperand(which, appendDotStr(getOperand(which)));
   }
 
   function toggleSign(which) {
-    let s = getOperand(which);
-    if (s.startsWith('-')) s = s.slice(1);
-    else s = '-' + (s || '');
-    setOperand(which, s);
+    setOperand(which, toggleSignStr(getOperand(which)));
   }
 
   function backspace(which) {

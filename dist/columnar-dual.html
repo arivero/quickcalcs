@@ -22,6 +22,23 @@
       --ink: #f3f7ff;
       --muted: #8a96ad;
       --border: rgba(255, 255, 255, 0.14);
+      --operations-gap: 12px;
+      --operations-min-width: 56px;
+      --operations-padding: 12px 14px;
+      --operations-font-size: 22px;
+      --operations-radius: 16px;
+      --operations-border: var(--border);
+      --operations-bg: rgba(13, 19, 33, 0.92);
+      --operations-transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
+      --actions-gap: 14px;
+      --actions-flex: 1 1 220px;
+      --actions-padding: 14px 18px;
+      --actions-font-size: 15px;
+      --actions-radius: 16px;
+      --actions-border: var(--border);
+      --actions-bg: rgba(12, 18, 32, 0.92);
+      --actions-transition: transform 0.12s ease, border 0.12s ease;
+      --actions-letter-spacing: 0.3px;
     }
     body {
       background: radial-gradient(1100px 680px at 50% -12%, #141d36, var(--bg));
@@ -172,68 +189,72 @@
       word-break: break-word;
     }
     .result-card .expression {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.2px;
-    }
-    .result-card .expression span {
-      min-width: 0;
-    }
-    .result-card .expression .is-active {
-      color: var(--ink);
-      font-weight: 600;
-    }
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+}
+.result-card .expression span {
+  min-width: 0;
+}
+.result-card .expression .is-active {
+  color: var(--ink);
+  font-weight: 600;
+}
     .operations {
-      display: flex;
-      justify-content: center;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .operations button {
-      min-width: 56px;
-      padding: 12px 14px;
-      font-size: 22px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: rgba(13, 19, 33, 0.92);
-      color: var(--ink);
-      cursor: pointer;
-      transition: transform 0.12s ease, border 0.12s ease, background 0.12s ease;
-    }
-    .operations button:hover {
-      transform: translateY(-1px);
-      border-color: var(--accent);
-    }
-    .operations button.is-active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--operations-gap, 10px);
+}
+
+.operations button {
+  min-width: var(--operations-min-width, 52px);
+  padding: var(--operations-padding, 12px 14px);
+  font-size: var(--operations-font-size, 20px);
+  border-radius: var(--operations-radius, 14px);
+  border: 1px solid var(--operations-border, rgba(255, 255, 255, 0.14));
+  background: var(--operations-bg, rgba(13, 20, 35, 0.9));
+  color: var(--operations-color, var(--ink));
+  cursor: pointer;
+  transition: var(--operations-transition, transform 0.15s ease, border 0.15s ease);
+}
+
+.operations button:hover {
+  transform: translateY(-1px);
+}
+
+.operations button.is-active {
+  border-color: var(--operations-active-border, var(--accent));
+  background: var(--operations-active-bg, var(--accent-soft));
+}
     .actions {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .actions button {
-      flex: 1 1 220px;
-      padding: 14px 18px;
-      border-radius: 16px;
-      border: 1px solid var(--border);
-      background: rgba(12, 18, 32, 0.92);
-      color: var(--ink);
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: 0.3px;
-      cursor: pointer;
-      transition: transform 0.12s ease, border 0.12s ease;
-    }
-    .actions button:hover {
-      transform: translateY(-1px);
-      border-color: var(--accent);
-    }
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: var(--actions-justify, center);
+  gap: var(--actions-gap, 12px);
+}
+
+.actions button {
+  flex: var(--actions-flex, 1 1 200px);
+  padding: var(--actions-padding, 14px 16px);
+  font-size: var(--actions-font-size, 15px);
+  border-radius: var(--actions-radius, 14px);
+  border: 1px solid var(--actions-border, rgba(255, 255, 255, 0.16));
+  background: var(--actions-bg, rgba(13, 19, 34, 0.9));
+  color: var(--actions-color, var(--ink));
+  cursor: pointer;
+  font-weight: var(--actions-font-weight, 600);
+  letter-spacing: var(--actions-letter-spacing, 0.2px);
+  transition: var(--actions-transition, border 0.15s ease, transform 0.15s ease);
+}
+
+.actions button:hover {
+  border-color: var(--actions-hover-border, var(--accent));
+  transform: translateY(-1px);
+}
     .hint {
       text-align: center;
       font-size: 12px;
@@ -460,6 +481,35 @@ function evaluateBinaryOperation(op, A, B) {
   return { value: rounded, text: formatRounded(rounded) };
 }
 
+// src/variants/shared/digits.js
+function normalizeZeros(s) {
+  if (s === "" || s === "-" || s === "." || s === "-.") return s;
+  const neg = s.startsWith("-");
+  let t = neg ? s.slice(1) : s;
+  if (t.startsWith("0") && t !== "0" && !t.startsWith("0.")) {
+    t = t.replace(/^0+/, "");
+    if (t === "") t = "0";
+  }
+  return neg ? "-" + t : t;
+}
+function appendDigitStr(s, digit) {
+  let t = s;
+  if (t === "-") t = "-0";
+  if (t === "") t = "0";
+  t += digit;
+  return normalizeZeros(t);
+}
+function appendDotStr(s) {
+  let t = s;
+  if (t === "" || t === "-") t += "0";
+  if (!t.includes(".")) t += ".";
+  return t;
+}
+function toggleSignStr(s) {
+  if (s.startsWith("-")) return s.slice(1);
+  return "-" + (s || "");
+}
+
 // src/variants/shared/mountDualOperandCalculator.js
 function mountDualOperandCalculator(options = {}) {
   const {
@@ -514,15 +564,6 @@ function mountDualOperandCalculator(options = {}) {
     if (s === "") return "0";
     return s;
   }
-  function normalizeZeros(s) {
-    const neg = s.startsWith("-");
-    let t = neg ? s.slice(1) : s;
-    if (t.startsWith("0") && !t.startsWith("0.")) {
-      t = t.replace(/^0+(?=\d)/, "");
-      if (t === "") t = "0";
-    }
-    return neg ? "-" + t : t;
-  }
   function getOperand(which) {
     return which === "A" ? aStr : bStr;
   }
@@ -531,23 +572,13 @@ function mountDualOperandCalculator(options = {}) {
     else bStr = value;
   }
   function appendDigit(which, digit) {
-    let s = getOperand(which);
-    if (s === "-") s = "-0";
-    if (s === "") s = "0";
-    s += digit;
-    setOperand(which, normalizeZeros(s));
+    setOperand(which, appendDigitStr(getOperand(which), digit));
   }
   function appendDot(which) {
-    let s = getOperand(which);
-    if (s === "" || s === "-") s += "0";
-    if (!s.includes(".")) s += ".";
-    setOperand(which, s);
+    setOperand(which, appendDotStr(getOperand(which)));
   }
   function toggleSign(which) {
-    let s = getOperand(which);
-    if (s.startsWith("-")) s = s.slice(1);
-    else s = "-" + (s || "");
-    setOperand(which, s);
+    setOperand(which, toggleSignStr(getOperand(which)));
   }
   function backspace(which) {
     let s = getOperand(which);

@@ -163,6 +163,9 @@ function evaluateBinaryOperation(op, A, B) {
   return { value: rounded, text: formatRounded(rounded) };
 }
 
+// src/variants/shared/ops.js
+var OPS = ["+", "\xD7", "\u2212", ":"];
+
 // src/variants/circular/index.js
 (() => {
   const cv = document.getElementById("cv");
@@ -170,7 +173,7 @@ function evaluateBinaryOperation(op, A, B) {
   let aStr = "";
   let bStr = "";
   let enteringA = true;
-  const OPS = ["+", "\xD7", "\u2212", ":"];
+  const OPS2 = OPS;
   let opIndex = 1;
   let focusedField = null, pointerMode = null;
   let swipeDisabled = false;
@@ -316,7 +319,7 @@ function evaluateBinaryOperation(op, A, B) {
       ctx.font = "22px system-ui, -apple-system, Segoe UI, Roboto";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(OPS[i], rx, ry);
+      ctx.fillText(OPS2[i], rx, ry);
     }
     ctx.beginPath();
     ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
@@ -328,7 +331,7 @@ function evaluateBinaryOperation(op, A, B) {
     ctx.font = Math.floor(innerR * 0.7) + "px system-ui, -apple-system, Segoe UI, Roboto";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(OPS[opIndex], cx, cy);
+    ctx.fillText(OPS2[opIndex], cx, cy);
   }
   function drawDial() {
     const { cx, cy, rOuter, rInner, cells } = L.dial;
@@ -385,7 +388,7 @@ function evaluateBinaryOperation(op, A, B) {
     drawButton(L.btnSwap, "Swap A\u2194B", pointerMode === "btnSwap" && pointerActive);
   }
   function computeResult() {
-    const { text } = evaluateBinaryOperation(OPS[opIndex], Number(aStr), Number(bStr));
+    const { text } = evaluateBinaryOperation(OPS2[opIndex], Number(aStr), Number(bStr));
     return text;
   }
   function normalizeZeros(s) {

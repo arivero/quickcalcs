@@ -21,6 +21,23 @@
       --accent: #6ea8fe;
       --accent-soft: rgba(110, 168, 254, 0.18);
       --surface: rgba(17, 26, 46, 0.86);
+      --operations-gap: 8px;
+      --operations-min-width: 48px;
+      --operations-padding: 12px 14px;
+      --operations-font-size: 20px;
+      --operations-radius: 14px;
+      --operations-border: rgba(255, 255, 255, 0.14);
+      --operations-bg: rgba(15, 22, 39, 0.9);
+      --operations-transition: transform 0.15s ease, border 0.15s ease;
+      --actions-justify: space-between;
+      --actions-gap: 12px;
+      --actions-flex: 1 1 200px;
+      --actions-padding: 14px 16px;
+      --actions-font-size: 15px;
+      --actions-radius: 14px;
+      --actions-border: rgba(255, 255, 255, 0.16);
+      --actions-bg: rgba(13, 19, 34, 0.9);
+      --actions-transition: border 0.15s ease, transform 0.15s ease;
     }
     body {
       background: radial-gradient(1200px 800px at 50% -10%, #1a2340, var(--bg));
@@ -81,28 +98,32 @@
       word-break: break-all;
     }
     .operations {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-    }
-    .operations button {
-      min-width: 48px;
-      padding: 12px 14px;
-      font-size: 20px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(15, 22, 39, 0.9);
-      color: var(--ink);
-      cursor: pointer;
-      transition: transform 0.15s ease, border 0.15s ease;
-    }
-    .operations button:hover {
-      transform: translateY(-1px);
-    }
-    .operations button.is-active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--operations-gap, 10px);
+}
+
+.operations button {
+  min-width: var(--operations-min-width, 52px);
+  padding: var(--operations-padding, 12px 14px);
+  font-size: var(--operations-font-size, 20px);
+  border-radius: var(--operations-radius, 14px);
+  border: 1px solid var(--operations-border, rgba(255, 255, 255, 0.14));
+  background: var(--operations-bg, rgba(13, 20, 35, 0.9));
+  color: var(--operations-color, var(--ink));
+  cursor: pointer;
+  transition: var(--operations-transition, transform 0.15s ease, border 0.15s ease);
+}
+
+.operations button:hover {
+  transform: translateY(-1px);
+}
+
+.operations button.is-active {
+  border-color: var(--operations-active-border, var(--accent));
+  background: var(--operations-active-bg, var(--accent-soft));
+}
     .result-card {
       background: var(--card);
       border-radius: 18px;
@@ -125,20 +146,20 @@
       word-break: break-all;
     }
     .result-card .expression {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.2px;
-    }
-    .result-card .expression span {
-      min-width: 0;
-    }
-    .result-card .expression .is-active {
-      color: var(--ink);
-      font-weight: 600;
-    }
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.2px;
+}
+.result-card .expression span {
+  min-width: 0;
+}
+.result-card .expression .is-active {
+  color: var(--ink);
+  font-weight: 600;
+}
     .pads {
       display: grid;
       grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -187,28 +208,30 @@
       font-size: 16px;
     }
     .actions {
-      display: flex;
-      justify-content: space-between;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .actions button {
-      flex: 1 1 200px;
-      padding: 14px 16px;
-      font-size: 15px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(13, 19, 34, 0.9);
-      color: var(--ink);
-      cursor: pointer;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      transition: border 0.15s ease, transform 0.15s ease;
-    }
-    .actions button:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: var(--actions-justify, center);
+  gap: var(--actions-gap, 12px);
+}
+
+.actions button {
+  flex: var(--actions-flex, 1 1 200px);
+  padding: var(--actions-padding, 14px 16px);
+  font-size: var(--actions-font-size, 15px);
+  border-radius: var(--actions-radius, 14px);
+  border: 1px solid var(--actions-border, rgba(255, 255, 255, 0.16));
+  background: var(--actions-bg, rgba(13, 19, 34, 0.9));
+  color: var(--actions-color, var(--ink));
+  cursor: pointer;
+  font-weight: var(--actions-font-weight, 600);
+  letter-spacing: var(--actions-letter-spacing, 0.2px);
+  transition: var(--actions-transition, border 0.15s ease, transform 0.15s ease);
+}
+
+.actions button:hover {
+  border-color: var(--actions-hover-border, var(--accent));
+  transform: translateY(-1px);
+}
     .hint {
       text-align: center;
       font-size: 12px;
@@ -412,6 +435,35 @@ function evaluateBinaryOperation(op, A, B) {
   return { value: rounded, text: formatRounded(rounded) };
 }
 
+// src/variants/shared/digits.js
+function normalizeZeros(s) {
+  if (s === "" || s === "-" || s === "." || s === "-.") return s;
+  const neg = s.startsWith("-");
+  let t = neg ? s.slice(1) : s;
+  if (t.startsWith("0") && t !== "0" && !t.startsWith("0.")) {
+    t = t.replace(/^0+/, "");
+    if (t === "") t = "0";
+  }
+  return neg ? "-" + t : t;
+}
+function appendDigitStr(s, digit) {
+  let t = s;
+  if (t === "-") t = "-0";
+  if (t === "") t = "0";
+  t += digit;
+  return normalizeZeros(t);
+}
+function appendDotStr(s) {
+  let t = s;
+  if (t === "" || t === "-") t += "0";
+  if (!t.includes(".")) t += ".";
+  return t;
+}
+function toggleSignStr(s) {
+  if (s.startsWith("-")) return s.slice(1);
+  return "-" + (s || "");
+}
+
 // src/variants/shared/mountDualOperandCalculator.js
 function mountDualOperandCalculator(options = {}) {
   const {
@@ -466,15 +518,6 @@ function mountDualOperandCalculator(options = {}) {
     if (s === "") return "0";
     return s;
   }
-  function normalizeZeros(s) {
-    const neg = s.startsWith("-");
-    let t = neg ? s.slice(1) : s;
-    if (t.startsWith("0") && !t.startsWith("0.")) {
-      t = t.replace(/^0+(?=\d)/, "");
-      if (t === "") t = "0";
-    }
-    return neg ? "-" + t : t;
-  }
   function getOperand(which) {
     return which === "A" ? aStr : bStr;
   }
@@ -483,23 +526,13 @@ function mountDualOperandCalculator(options = {}) {
     else bStr = value;
   }
   function appendDigit(which, digit) {
-    let s = getOperand(which);
-    if (s === "-") s = "-0";
-    if (s === "") s = "0";
-    s += digit;
-    setOperand(which, normalizeZeros(s));
+    setOperand(which, appendDigitStr(getOperand(which), digit));
   }
   function appendDot(which) {
-    let s = getOperand(which);
-    if (s === "" || s === "-") s += "0";
-    if (!s.includes(".")) s += ".";
-    setOperand(which, s);
+    setOperand(which, appendDotStr(getOperand(which)));
   }
   function toggleSign(which) {
-    let s = getOperand(which);
-    if (s.startsWith("-")) s = s.slice(1);
-    else s = "-" + (s || "");
-    setOperand(which, s);
+    setOperand(which, toggleSignStr(getOperand(which)));
   }
   function backspace(which) {
     let s = getOperand(which);

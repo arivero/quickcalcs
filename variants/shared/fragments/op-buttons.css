@@ -1,0 +1,28 @@
+.operations {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--operations-gap, 10px);
+}
+
+.operations button {
+  min-width: var(--operations-min-width, 52px);
+  padding: var(--operations-padding, 12px 14px);
+  font-size: var(--operations-font-size, 20px);
+  border-radius: var(--operations-radius, 14px);
+  border: 1px solid var(--operations-border, rgba(255, 255, 255, 0.14));
+  background: var(--operations-bg, rgba(13, 20, 35, 0.9));
+  color: var(--operations-color, var(--ink));
+  cursor: pointer;
+  transition: var(--operations-transition, transform 0.15s ease, border 0.15s ease);
+}
+
+.operations button:hover {
+  transform: translateY(-1px);
+}
+
+.operations button.is-active {
+  border-color: var(--operations-active-border, var(--accent));
+  background: var(--operations-active-bg, var(--accent-soft));
+}
+

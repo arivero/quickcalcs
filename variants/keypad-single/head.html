@@ -8,6 +8,22 @@
       --accent: #7eb0ff;
       --accent-soft: rgba(126, 176, 255, 0.18);
       --border: rgba(255, 255, 255, 0.12);
+      --operations-gap: 10px;
+      --operations-min-width: 58px;
+      --operations-padding: 12px 16px;
+      --operations-font-size: 20px;
+      --operations-radius: 14px;
+      --operations-border: rgba(255, 255, 255, 0.14);
+      --operations-bg: rgba(13, 20, 35, 0.9);
+      --operations-transition: transform 0.15s ease, border 0.15s ease;
+      --actions-gap: 12px;
+      --actions-flex: 1 1 200px;
+      --actions-padding: 14px 16px;
+      --actions-font-size: 15px;
+      --actions-radius: 14px;
+      --actions-border: rgba(255, 255, 255, 0.16);
+      --actions-bg: rgba(12, 19, 32, 0.9);
+      --actions-transition: border 0.15s ease, transform 0.15s ease;
     }
     body {
       background: radial-gradient(1100px 800px at 50% -10%, #182238, var(--bg));
@@ -74,45 +90,8 @@
       font-weight: 700;
       word-break: break-all;
     }
-    .result-card .expression {
-      display: flex;
-      gap: 6px;
-      justify-content: center;
-      font-size: 12px;
-      color: var(--muted);
-      letter-spacing: 0.2px;
-    }
-    .result-card .expression span {
-      min-width: 0;
-    }
-    .result-card .expression .is-active {
-      color: var(--ink);
-      font-weight: 600;
-    }
-    .operations {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      flex-wrap: wrap;
-    }
-    .operations button {
-      min-width: 58px;
-      padding: 12px 16px;
-      font-size: 20px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.14);
-      background: rgba(13, 20, 35, 0.9);
-      color: var(--ink);
-      cursor: pointer;
-      transition: transform 0.15s ease, border 0.15s ease;
-    }
-    .operations button:hover {
-      transform: translateY(-1px);
-    }
-    .operations button.is-active {
-      border-color: var(--accent);
-      background: var(--accent-soft);
-    }
+    {{> variants/shared/fragments/result-expression.css }}
+    {{> variants/shared/fragments/op-buttons.css }}
     .lock-control {
       display: flex;
       justify-content: center;
@@ -178,28 +157,7 @@
     .pad[data-pad-layout="single"] .pad-grid [data-key="zero"] {
       grid-column: span 2;
     }
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-    .actions button {
-      flex: 1 1 200px;
-      padding: 14px 16px;
-      font-size: 15px;
-      border-radius: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.16);
-      background: rgba(12, 19, 32, 0.9);
-      color: var(--ink);
-      cursor: pointer;
-      font-weight: 600;
-      letter-spacing: 0.2px;
-      transition: border 0.15s ease, transform 0.15s ease;
-    }
-    .actions button:hover {
-      border-color: var(--accent);
-      transform: translateY(-1px);
-    }
+    {{> variants/shared/fragments/actions.css }}
     .hint {
       text-align: center;
       font-size: 12px;

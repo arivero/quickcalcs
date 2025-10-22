@@ -1,4 +1,5 @@
 import { evaluateBinaryOperation } from '../shared/precision.js';
+import { OPS as SHARED_OPS } from '../shared/ops.js';
 
 ;(() => {
     const cv = document.getElementById('cv');
@@ -8,7 +9,7 @@ import { evaluateBinaryOperation } from '../shared/precision.js';
     let aStr = "";   // operand A (can be negative & decimal)
     let bStr = "";   // operand B
     let enteringA = true; // which operand we append to
-    const OPS = ["+", "×", "−", ":"]; // order is important for wheel
+    const OPS = SHARED_OPS; // order is important for wheel
     let opIndex = 1; // default to ×
 
     // Focus & swipe control
