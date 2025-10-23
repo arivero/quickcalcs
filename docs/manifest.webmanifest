@@ -2,7 +2,7 @@
   "id": "/quickcalcs/",
   "name": "Fast Calculator",
   "short_name": "Fast Calc",
-  "start_url": "/quickcalcs/round.html",
+  "start_url": "/quickcalcs/index.html",
   "scope": "/quickcalcs/",
   "display": "standalone",
   "background_color": "#06101f",
