@@ -12,5 +12,10 @@
     <priority>0.70</priority>
     <lastmod>2025-10-25</lastmod>
   </url>
+  <url>
+    <loc>https://arivero.github.io/quickcalcs/privacy.html</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.30</priority>
+    <lastmod>2025-10-25</lastmod>
+  </url>
 </urlset>
-
