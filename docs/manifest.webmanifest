@@ -10,5 +10,18 @@
   "icons": [
     { "src": "/quickcalcs/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
     { "src": "/quickcalcs/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ],
+  "categories": ["utilities", "productivity", "education"],
+  "shortcuts": [
+    {
+      "name": "Round Calculator",
+      "short_name": "Round",
+      "url": "/quickcalcs/round.html",
+    },
+    {
+      "name": "Clock Calculator",
+      "short_name": "Clock",
+      "url": "/quickcalcs/clock.html",
+    }
   ]
 }
